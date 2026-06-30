@@ -5,16 +5,13 @@ from loader import Loader
 from selector import Selector
 from image_frame import ImageFrame
 from clipboard import copy_files_to_clipboard
-from typing import Dict
+from typing import Dict, List
 from pathlib import Path
 
-# TODO: copy to clipboard on enter
-# TODO: react to strg+c
-# TODO: make Gui more snappy - see what can be done
+# TODO: do not fore fullscreen and on top
+# TODO: make a reset functionality (unselect all)
 
 _PADDING = 100
-_BORDER_SIZE = 3
-_GAP_SIZE = 3
 _MIN_SIZE = "600x600"
 
 def ask_file_name() -> str:
@@ -39,7 +36,6 @@ class Display(object):
         self._ROOT.bind("<Left>", self._on_left_arrow_key)
         self._ROOT.bind("<Right>", self._on_right_arrow_key)
         self._ROOT.bind("<Escape>", self._stop_loop)
-        self._ROOT.bind("<Return>", self._on_enter)
         self._ROOT.bind("<space>", self._on_space)
         self._ROOT.bind("<Control-c>", self._on_copy)
         self._ROOT.bind("<Control-C>", self._on_copy)
@@ -78,9 +74,6 @@ class Display(object):
 
     def _on_copy(self, evetn) -> None:
         copy_files_to_clipboard(self._selector.get_selection())
-
-    def _on_enter(self, event) -> None:
-        pass
 
     def _stop_loop(self, event) -> None:
         self.destroy_display()

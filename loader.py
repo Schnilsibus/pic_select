@@ -7,7 +7,7 @@ from typing import Dict, Callable, Set, Literal
 
 class Loader(object):
 
-    def __init__(self, path: Path, preload_length: int = 2):
+    def __init__(self, path: Path, preload_length: int = 4):
         self._preload_length = preload_length
         self._callbacks: Set[Callable[[Image.Image, Image.Image], None]] = set()
         self._images: Dict[Path, Image.Image] = dict()

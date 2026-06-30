@@ -51,11 +51,13 @@ class ImageFrame(tk.Frame):
         self._selected = True
         self._unselected_Label.pack_forget()
         self._border_frame.pack()
+        self.winfo_toplevel().update()
 
     def unselect(self):
         self._selected = False
         self._unselected_Label.pack()
         self._border_frame.pack_forget()
+        self.winfo_toplevel().update()
 
     def toggle_selected(self):
         if self._selected:
