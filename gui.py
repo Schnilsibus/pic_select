@@ -8,11 +8,10 @@ from clipboard import copy_files_to_clipboard
 from typing import Dict, List
 from pathlib import Path
 
-# TODO: do not fore fullscreen and on top
 # TODO: make a reset functionality (unselect all)
+# TODO: display img name
 
 _PADDING = 100
-_MIN_SIZE = "600x600"
 
 def ask_file_name() -> str:
     _root = tk.Tk()
@@ -23,13 +22,11 @@ def ask_file_name() -> str:
 
 class Display(object):
     
-    def __init__(self, loader: Loader, selector: Selector, fullscreen = True):
+    def __init__(self, loader: Loader, selector: Selector):
         self._loader = loader
         self._loader.subscribe_on_load(callback=self._on_load)
 
         self._selector = selector
-        
-        self._fullscreen = fullscreen
         
         self._ROOT: tk.Tk = tk.Tk()
         self._ROOT.withdraw()
@@ -47,25 +44,20 @@ class Display(object):
 
         self._image_frames: Dict[Path, ImageFrame] = {}
         
-        if self._fullscreen:
-            self._ROOT.attributes('-fullscreen', True)
-            self._ROOT.attributes("-topmost", True)
-        else:
-            self._ROOT.geometry(_MIN_SIZE)
+        self._ROOT.state("zoomed")
 
     def _on_load(self, loaded: Image.Image, unloaded: Image.Image) -> None:
         self._image_frames.pop(Path(unloaded.filename))
-        if loaded is None:
-            raise RuntimeError("No More Images!")
-        self._create_image_frame(path=Path(loaded.filename), image=loaded)
+        if loaded is not None:
+            self._create_image_frame(path=Path(loaded.filename), image=loaded)
 
     def _on_left_arrow_key(self, event) -> None:
-        self.show(self._loader.get_neighbor_path("Left"))
-        self._loader.backward()
+        if self.show(self._loader.get_neighbor_path("Left")):
+            self._loader.backward()
 
     def _on_right_arrow_key(self, event) -> None:
-        self.show(self._loader.get_neighbor_path("Right"))
-        self._loader.forward()
+        if self.show(self._loader.get_neighbor_path("Right")):
+            self._loader.forward()
 
     def _on_space(self, event) -> None:
         path = self._loader.get_current_path()
@@ -103,9 +95,13 @@ class Display(object):
 
         self._create_image_frames()
         self.show(path=self._loader.get_current_path())
+        
         self._ROOT.mainloop()
         
-    def show(self, path: Path) -> None:
+    def show(self, path: Path) -> bool:
+        if path not in self._image_frames:
+            return False
+
         if self._current_image_frame is not None:
             self._current_image_frame.place_forget()
 
