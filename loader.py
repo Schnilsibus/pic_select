@@ -2,8 +2,6 @@ from PIL import Image
 from pathlib import Path
 from typing import Dict, Callable, Set, Literal, List
 
-# TODO: handle case some pictures have been deleted (1,2,3,114) - NOT IMPORTANT
-
 class Loader(object):
 
     def __init__(self, path: Path, preload_length: int = 4):
@@ -47,6 +45,9 @@ class Loader(object):
             return self._get_path(relative=-1)
         if neighbor == "Right":
             return self._get_path(relative=1)
+    
+    def get_all_paths(self) -> List[Path]:
+        return self._files
 
     def forward(self) -> Path:
         self._current_index = self._current_index + 1

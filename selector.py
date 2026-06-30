@@ -21,3 +21,11 @@ class Selector(object):
             return self._files[key]
         else:
             return False
+        
+    def multi_select(self, keys: List[Path]) -> None:
+        for path in keys:
+            self._files[path] = True
+    
+    def unselect_all(self) -> None:
+        for path in self._files.keys():
+            self._files[path] = False

@@ -8,7 +8,6 @@ from clipboard import copy_files_to_clipboard
 from typing import Dict, List
 from pathlib import Path
 
-# TODO: make a reset functionality (unselect all)
 # TODO: display img name
 # TODO: remember user input (right now klicks are ignored if loader is busy) OR figure out how to not wait for loader (defeats the point)
 
@@ -34,10 +33,12 @@ class Display(object):
         self._ROOT.withdraw()
         self._ROOT.bind("<Left>", self._on_left_arrow_key)
         self._ROOT.bind("<Right>", self._on_right_arrow_key)
-        self._ROOT.bind("<Escape>", self._stop_loop)
         self._ROOT.bind("<space>", self._on_space)
         self._ROOT.bind("<Control-c>", self._on_copy)
         self._ROOT.bind("<Control-C>", self._on_copy)
+        self._ROOT.bind("<Control-a>", self._on_strg_a)
+        self._ROOT.bind("<Control-A>", self._on_strg_a)
+        self._ROOT.bind("<Escape>", self._on_escape)
 
         self._current_image_frame: ImageFrame = None
 
@@ -89,8 +90,16 @@ class Display(object):
     def _on_copy(self, evetn) -> None:
         copy_files_to_clipboard(self._selector.get_selection())
 
-    def _stop_loop(self, event) -> None:
-        self._ROOT.destroy()
+    def _on_strg_a(self, event) -> None:
+        paths = self._loader.get_all_paths()
+        self._selector.multi_select(keys=paths)
+        for frame in self._image_frames.values():
+            frame.select()
+    
+    def _on_escape(self, event) -> None:
+        self._selector.unselect_all()
+        for frame in self._image_frames.values():
+            frame.unselect()
 
     def _create_image_frames(self) -> None:
         for path, image in self._loader.get_images().items():
