@@ -84,6 +84,9 @@ class Loader(object):
     def get_preload_length(self) -> int:
         return self._preload_length
     
+    def get_directory(self) -> Path:
+        return self._directory
+    
     def subscribe_on_load(self, callback: Callable[[Image.Image, Image.Image], None]):
         self._callbacks.add(callback)
     

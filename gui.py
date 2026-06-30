@@ -8,7 +8,6 @@ from clipboard import copy_files_to_clipboard
 from typing import Dict, List
 from pathlib import Path
 
-# TODO: display img name
 # TODO: remember user input (right now klicks are ignored if loader is busy) OR figure out how to not wait for loader (defeats the point)
 
 _PADDING = 100
@@ -30,6 +29,7 @@ class Display(object):
         self._selector = selector
         
         self._ROOT: tk.Tk = tk.Tk()
+        self._ROOT.title(str(self._loader.get_directory()))
         self._ROOT.withdraw()
         self._ROOT.bind("<Left>", self._on_left_arrow_key)
         self._ROOT.bind("<Right>", self._on_right_arrow_key)
@@ -39,6 +39,9 @@ class Display(object):
         self._ROOT.bind("<Control-a>", self._on_strg_a)
         self._ROOT.bind("<Control-A>", self._on_strg_a)
         self._ROOT.bind("<Escape>", self._on_escape)
+
+        self._current_image_name: tk.StringVar = tk.StringVar()
+        self._current_image_label: tk.Label = tk.Label(master=self._ROOT, textvariable=self._current_image_name, font=("Arial, 18"))
 
         self._current_image_frame: ImageFrame = None
 
@@ -124,6 +127,8 @@ class Display(object):
         self._WIDTH: int = self._ROOT.winfo_width()
         self._HEIGHT: int = self._ROOT.winfo_height()
 
+        self._current_image_label.place(relx=0.5, rely=1.0, anchor=tk.S)
+
         self._create_image_frames()
         self.show(path=self._loader.get_current_path())
         
@@ -132,6 +137,8 @@ class Display(object):
     def show(self, path: Path) -> None:
         if self._current_image_frame is not None:
             self._current_image_frame.place_forget()
+
+        self._current_image_name.set(value=path.name)
 
         self._current_image_frame = self._image_frames[path]
 
