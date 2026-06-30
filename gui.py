@@ -4,8 +4,12 @@ from PIL import Image, ImageTk, ImageOps
 from loader import Loader
 from selector import Selector
 from image_frame import ImageFrame
-from typing import Dict, Tuple
+from typing import Dict
 from pathlib import Path
+
+# TODO: copy to clipboard on enter
+# TODO: react to strg+c
+# TODO: make Gui more snappy - see what can be done
 
 _PADDING = 100
 _BORDER_SIZE = 3
@@ -51,8 +55,10 @@ class Display(object):
             self._ROOT.geometry(_MIN_SIZE)
 
     def _on_load(self, loaded: Image.Image, unloaded: Image.Image) -> None:
-        self._create_image_frame(path=Path(loaded.filename), image=loaded)
         self._image_frames.pop(Path(unloaded.filename))
+        if loaded is None:
+            raise RuntimeError("No More Images!")
+        self._create_image_frame(path=Path(loaded.filename), image=loaded)
 
     def _on_left_arrow_key(self, event) -> None:
         self.show(self._loader.get_neighbor_path("Left"))
@@ -68,7 +74,8 @@ class Display(object):
         self._current_image_frame.toggle_selected()
 
     def _on_enter(self, event) -> None:
-        raise NotImplementedError()
+        for path in self._selector.get_selection():
+            print(path)
 
     def _stop_loop(self, event) -> None:
         self.destroy_display()
@@ -78,7 +85,10 @@ class Display(object):
             self._create_image_frame(path=path, image=image)
 
     def _create_image_frame(self, path: Path, image: Image.Image) -> None:
-        self._image_frames[path] = ImageFrame(master=self._ROOT, image=image, max_image_size=(self._WIDTH - _PADDING, self._HEIGHT - _PADDING))
+        self._image_frames[path] = ImageFrame(master=self._ROOT,
+                                              image=image,
+                                              max_image_size=(self._WIDTH - _PADDING, self._HEIGHT - _PADDING),
+                                              selected=self._selector.is_selected(path))
 
     def create_display_image(self, image: Image.Image) -> ImageTk.PhotoImage:
         path = self._loader.get_current_path()

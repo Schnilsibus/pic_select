@@ -14,7 +14,7 @@ class Selector(object):
         return self._files[key]
 
     def get_selection(self) -> List[Path]:
-        return list({k: v for k, v in self._files.items() if v is True}.values())
+        return list({k: v for k, v in self._files.items() if v is True}.keys())
 
     def is_selected(self, key: Path) -> bool:
         if key in self._files:

@@ -6,5 +6,5 @@ from pathlib import Path
 def start():
     selector = Selector()
     loader = Loader(path=Path(ask_file_name()))
-    display = Display(loader=loader, selector=selector, fullscreen=False)
+    display = Display(loader=loader, selector=selector)
     display.start_display()

@@ -52,3 +52,19 @@ def on_space(event):
 root.bind("<space>", on_space)
 
 root.mainloop()
+
+"""
+
+----------  Clipboard Solution?  ------------
+
+import os
+path = 'C:\folder\text.txt'
+command = f"powershell Set-Clipboard -LiteralPath {path}"
+os.system(command)
+
+
+powershell -command "Set-Clipboard -Path 'C:\path\to\file1.txt', 'C:\path\to\file2.jpg', 'D:\notes.pdf'"
+
+"C:\Users\Nils\Desktop\pic_select\sample\IMG_0095.png", "C:\Users\Nils\Desktop\pic_select\sample\IMG_0099.png"
+
+"""

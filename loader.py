@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import Dict, Callable, Set, Literal
 
 # TODO: handle case some pictures have been deleted (1,2,3,114) - NOT IMPORTANT
+# TODO: handle case last of all images
 
 class Loader(object):
 
