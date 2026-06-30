@@ -4,6 +4,7 @@ from PIL import Image, ImageTk, ImageOps
 from loader import Loader
 from selector import Selector
 from image_frame import ImageFrame
+from clipboard import copy_files_to_clipboard
 from typing import Dict
 from pathlib import Path
 
@@ -40,6 +41,8 @@ class Display(object):
         self._ROOT.bind("<Escape>", self._stop_loop)
         self._ROOT.bind("<Return>", self._on_enter)
         self._ROOT.bind("<space>", self._on_space)
+        self._ROOT.bind("<Control-c>", self._on_copy)
+        self._ROOT.bind("<Control-C>", self._on_copy)
 
         self._current_image_frame: ImageFrame = None
 
@@ -73,9 +76,11 @@ class Display(object):
         self._selector.toggle(key=path)
         self._current_image_frame.toggle_selected()
 
+    def _on_copy(self, evetn) -> None:
+        copy_files_to_clipboard(self._selector.get_selection())
+
     def _on_enter(self, event) -> None:
-        for path in self._selector.get_selection():
-            print(path)
+        pass
 
     def _stop_loop(self, event) -> None:
         self.destroy_display()
