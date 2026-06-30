@@ -10,6 +10,7 @@ from pathlib import Path
 
 # TODO: make a reset functionality (unselect all)
 # TODO: display img name
+# TODO: remember user input (right now klicks are ignored if loader is busy) OR figure out how to not wait for loader (defeats the point)
 
 _PADDING = 100
 
@@ -25,6 +26,7 @@ class Display(object):
     def __init__(self, loader: Loader, selector: Selector):
         self._loader = loader
         self._loader.subscribe_on_load(callback=self._on_load)
+        self._loader_busy = False
 
         self._selector = selector
         
@@ -46,18 +48,38 @@ class Display(object):
         
         self._ROOT.state("zoomed")
 
-    def _on_load(self, loaded: Image.Image, unloaded: Image.Image) -> None:
-        self._image_frames.pop(Path(unloaded.filename))
-        if loaded is not None:
-            self._create_image_frame(path=Path(loaded.filename), image=loaded)
-
     def _on_left_arrow_key(self, event) -> None:
-        if self.show(self._loader.get_neighbor_path("Left")):
+        if self._loader_busy:
+            return None
+        else:
+            self._loader_busy = True
+        path = self._loader.get_neighbor_path("Left")
+        if path is not None:
+            self.show(path=path)
             self._loader.backward()
+        else:
+            self._loader_busy = False
 
     def _on_right_arrow_key(self, event) -> None:
-        if self.show(self._loader.get_neighbor_path("Right")):
+        if self._loader_busy:
+            return None
+        else:
+            self._loader_busy = True
+        path = self._loader.get_neighbor_path("Right")
+        if path is not None:
+            self.show(path=path)
             self._loader.forward()
+        else:
+            self._loader_busy = False
+
+    def _on_load(self, loaded: Image.Image, unloaded: Image.Image) -> None:
+        if unloaded is not None:
+            self._image_frames.pop(Path(unloaded.filename))
+        if loaded is not None:
+            self._create_image_frame(path=Path(loaded.filename), image=loaded)
+        frames = ", ".join(sorted([str(int(k.name[4:8])) for k in self._image_frames.keys()]))
+        self._loader_busy = False
+        print(f"GUI   -UPDATE: {len(self._image_frames)} - {frames}\n")
 
     def _on_space(self, event) -> None:
         path = self._loader.get_current_path()
@@ -68,7 +90,7 @@ class Display(object):
         copy_files_to_clipboard(self._selector.get_selection())
 
     def _stop_loop(self, event) -> None:
-        self.destroy_display()
+        self._ROOT.destroy()
 
     def _create_image_frames(self) -> None:
         for path, image in self._loader.get_images().items():
@@ -98,10 +120,7 @@ class Display(object):
         
         self._ROOT.mainloop()
         
-    def show(self, path: Path) -> bool:
-        if path not in self._image_frames:
-            return False
-
+    def show(self, path: Path) -> None:
         if self._current_image_frame is not None:
             self._current_image_frame.place_forget()
 
@@ -109,6 +128,3 @@ class Display(object):
 
         self._current_image_frame.place(relx=0.5, rely=0.5, anchor="center")
         self._ROOT.update()
-
-    def destroy_display(self) -> None:
-        self._ROOT.destroy()

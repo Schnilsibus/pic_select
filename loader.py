@@ -3,9 +3,6 @@ from pathlib import Path
 from typing import Dict, Callable, Set, Literal, List
 
 # TODO: handle case some pictures have been deleted (1,2,3,114) - NOT IMPORTANT
-# TODO: handle case last of all images
-
-# TODO: generalize for different image naming conventions
 
 class Loader(object):
 
@@ -27,20 +24,20 @@ class Loader(object):
     def _get_path(self, relative: int = 0) -> Path:
         index = self._current_index + relative
         if index not in range(len(self._files)):
-            raise ValueError("File does not exist")
+            return None
         return self._files[index]
     
     def _load_image(self, relative: int = 0) -> Image.Image:
-        try:
-            path = self._get_path(relative=relative)
-            image = Image.open(path)
-            self._images[path] = image
-            return image
-        except ValueError:
+        path = self._get_path(relative=relative)
+        if path is None:
             return None
+        
+        image = Image.open(path)
+        self._images[path] = image
+        return image
 
     def get_current_image(self) -> Image.Image:
-        return self._images[self._get_path()]
+        return self._images[self.get_current_path()]
     
     def get_current_path(self) -> Path:
         return self._get_path()
@@ -55,10 +52,15 @@ class Loader(object):
         self._current_index = self._current_index + 1
         if self._current_index not in range(0, len(self._files)):
             self._current_index = self._current_index - 1
-            raise RuntimeError("Reached last image!")
+            return None
         
         loaded = self._load_image(relative=self._preload_length)
-        unloaded = self._images.pop(self._get_path(relative=-self._preload_length - 1))
+        unload_path = self._get_path(relative=-self._preload_length - 1)
+        if unload_path in self._images:
+            unloaded = self._images.pop(self._get_path(relative=-self._preload_length - 1))
+        else:
+            unloaded = None
+        print(f"LOADER-UPDATE: {len(self._images)} - {self.get_images_debug()}")
         self._trigger_load(loaded=loaded, unloaded=unloaded)
         return self.get_current_path()
 
@@ -66,10 +68,15 @@ class Loader(object):
         self._current_index = self._current_index - 1
         if self._current_index not in range(0, len(self._files)):
             self._current_index = self._current_index + 1
-            raise RuntimeError("Reached first image!")
+            return None
         
         loaded = self._load_image(relative=-self._preload_length)
-        unloaded = self._images.pop(self._get_path(relative=self._preload_length + 1))
+        unload_path = self._get_path(relative=self._preload_length + 1)
+        if unload_path in self._images:
+            unloaded = self._images.pop(unload_path)
+        else:
+            unloaded = None
+        print(f"LOADER-UPDATE: {len(self._images)} - {self.get_images_debug()}")
         self._trigger_load(loaded=loaded, unloaded=unloaded)
         return self.get_current_path()
     
@@ -88,3 +95,6 @@ class Loader(object):
     
     def get_images(self) -> Dict[Path, Image.Image]:
         return self._images
+    
+    def get_images_debug(self) -> str:
+        return ", ".join(sorted([str(int(k.name[4:8])) for k in self.get_images().keys()]))
