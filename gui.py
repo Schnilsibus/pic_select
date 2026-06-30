@@ -3,6 +3,7 @@ from tkinter import filedialog
 from PIL import Image, ImageTk, ImageOps
 from loader import Loader
 from selector import Selector
+from image_frame import ImageFrame
 from typing import Dict, Tuple
 from pathlib import Path
 
@@ -36,12 +37,12 @@ class Display(object):
         self._ROOT.bind("<Return>", self._on_enter)
         self._ROOT.bind("<space>", self._on_space)
 
-        self._current_widget: tk.Widget = None
+        self._current_image_frame: ImageFrame = None
 
         self._WIDTH: int = None
         self._HEIGHT: int = None
 
-        self._widgets: Dict[Path, Tuple[tk.Widget, Image.Image]] = {}
+        self._image_frames: Dict[Path, ImageFrame] = {}
         
         if self._fullscreen:
             self._ROOT.attributes('-fullscreen', True)
@@ -50,8 +51,8 @@ class Display(object):
             self._ROOT.geometry(_MIN_SIZE)
 
     def _on_load(self, loaded: Image.Image, unloaded: Image.Image) -> None:
-        self._create_widget(path=Path(loaded.filename), image=loaded)
-        self._widgets.pop(Path(unloaded.filename))
+        self._create_image_frame(path=Path(loaded.filename), image=loaded)
+        self._image_frames.pop(Path(unloaded.filename))
 
     def _on_left_arrow_key(self, event) -> None:
         self.show(self._loader.get_neighbor_path("Left"))
@@ -64,11 +65,7 @@ class Display(object):
     def _on_space(self, event) -> None:
         path = self._loader.get_current_path()
         self._selector.toggle(key=path)
-        widget, image = self._widgets[path]
-        widget.destroy()
-        new_widget = self.border_image(image=image)
-        self._widgets[path] = (new_widget, image)
-        self.show(path=path)
+        self._current_image_frame.toggle_selected()
 
     def _on_enter(self, event) -> None:
         raise NotImplementedError()
@@ -76,47 +73,17 @@ class Display(object):
     def _stop_loop(self, event) -> None:
         self.destroy_display()
 
-    def _create_widgets(self) -> None:
+    def _create_image_frames(self) -> None:
         for path, image in self._loader.get_images().items():
-            self._create_widget(path=path, image=image)
+            self._create_image_frame(path=path, image=image)
 
-    def _create_widget(self, path: Path, image: Image.Image) -> None:
-        tk_image = self.create_display_image(image=image)
-        self._widgets[path] = (self.border_image(image = tk_image), tk_image)
+    def _create_image_frame(self, path: Path, image: Image.Image) -> None:
+        self._image_frames[path] = ImageFrame(master=self._ROOT, image=image, max_image_size=(self._WIDTH - _PADDING, self._HEIGHT - _PADDING))
 
     def create_display_image(self, image: Image.Image) -> ImageTk.PhotoImage:
         path = self._loader.get_current_path()
         display_image = ImageOps.exif_transpose(image=image)
         display_image.thumbnail(size = (self._WIDTH - _PADDING, self._HEIGHT - _PADDING), resample = Image.Resampling.LANCZOS)
-        
-        return ImageTk.PhotoImage(display_image)
-    
-    def border_image(self, image: ImageTk.PhotoImage) -> tk.Widget:
-        label = tk.Label(self._ROOT, image=image)
-        if not self._selector.is_selected(key=self._loader.get_current_path()):
-            return label
-        else:
-            return self.border_label(label=label)
-        
-    def border_label(self, label: tk.Label) -> tk.Widget:
-        width, height = label.winfo_width(), label.winfo_height()
-        border_frame = tk.Frame(self._ROOT,
-                                width=width + _GAP_SIZE + _BORDER_SIZE,
-                                height=height + _GAP_SIZE + _BORDER_SIZE,
-                                background="#074bb8")
-        gap_frame = tk.Frame(border_frame,
-                                width=width + _GAP_SIZE,
-                                height=height + _GAP_SIZE,
-                                background="white")
-        label.master = gap_frame
-
-        border_frame.pack_propagate(False)
-        gap_frame.pack_propagate(False)
-        label.pack_propagate(False)
-
-        label.pack(padx=_GAP_SIZE, pady=_GAP_SIZE)
-        gap_frame.pack(padx=_BORDER_SIZE, pady=_BORDER_SIZE)
-        return border_frame
 
     def start_display(self) -> None:
         self._ROOT.deiconify()
@@ -126,18 +93,17 @@ class Display(object):
         self._WIDTH: int = self._ROOT.winfo_width()
         self._HEIGHT: int = self._ROOT.winfo_height()
 
-        self._create_widgets()
+        self._create_image_frames()
         self.show(path=self._loader.get_current_path())
         self._ROOT.mainloop()
         
     def show(self, path: Path) -> None:
-        if self._current_widget is not None:
-            self._current_widget.place_forget()
+        if self._current_image_frame is not None:
+            self._current_image_frame.place_forget()
 
-        widget, image = self._widgets[path]
-        self._current_widget = widget
+        self._current_image_frame = self._image_frames[path]
 
-        self._current_widget.place(relx=0.5, rely=0.5, anchor="center")
+        self._current_image_frame.place(relx=0.5, rely=0.5, anchor="center")
         self._ROOT.update()
 
     def destroy_display(self) -> None:
