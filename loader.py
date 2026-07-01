@@ -7,9 +7,11 @@ class Loader(object):
     def __init__(self, path: Path, preload_length: int = 4):
         if not path.is_file:
             raise ValueError(f"{path} is no file")
+        
+        self._count = 0
 
         self._preload_length = preload_length
-        self._callbacks: Set[Callable[[Image.Image, Image.Image], None]] = set()
+        self._callbacks: Set[Callable[[Image.Image, Image.Image, int], None]] = set()
         self._images: Dict[Path, Image.Image] = dict()
         self._directory: Path = path.parent
         self._files: List[Path] = [f for f in self._directory.iterdir() if f.is_file()]
@@ -49,7 +51,8 @@ class Loader(object):
     def get_all_paths(self) -> List[Path]:
         return self._files
 
-    def forward(self) -> Path:
+    def forward(self) -> None:
+        self._count = self._count + 1
         self._current_index = self._current_index + 1
         if self._current_index not in range(0, len(self._files)):
             self._current_index = self._current_index - 1
@@ -61,11 +64,11 @@ class Loader(object):
             unloaded = self._images.pop(self._get_path(relative=-self._preload_length - 1))
         else:
             unloaded = None
-        print(f"LOADER-UPDATE: {len(self._images)} - {self.get_images_debug()}")
-        self._trigger_load(loaded=loaded, unloaded=unloaded)
-        return self.get_current_path()
+        print(f"LOADER-UPDATE {self._count:04d}: {len(self._images)} - {self.get_images_debug()}")
+        self._trigger_load(loaded=loaded, unloaded=unloaded, count=self._count)
 
-    def backward(self) -> Path:
+    def backward(self) -> None:
+        self._count = self._count + 1
         self._current_index = self._current_index - 1
         if self._current_index not in range(0, len(self._files)):
             self._current_index = self._current_index + 1
@@ -77,9 +80,8 @@ class Loader(object):
             unloaded = self._images.pop(unload_path)
         else:
             unloaded = None
-        print(f"LOADER-UPDATE: {len(self._images)} - {self.get_images_debug()}")
-        self._trigger_load(loaded=loaded, unloaded=unloaded)
-        return self.get_current_path()
+        print(f"LOADER-UPDATE {self._count:4d}: {len(self._images)} - {self.get_images_debug()}")
+        self._trigger_load(loaded=loaded, unloaded=unloaded, count=self._count)
     
     def get_preload_length(self) -> int:
         return self._preload_length
@@ -87,15 +89,15 @@ class Loader(object):
     def get_directory(self) -> Path:
         return self._directory
     
-    def subscribe_on_load(self, callback: Callable[[Image.Image, Image.Image], None]):
+    def subscribe_on_load(self, callback: Callable[[Image.Image, Image.Image, int], None]):
         self._callbacks.add(callback)
     
-    def unsubscribe_on_load(self, callback: Callable[[Image.Image, Image.Image], None]):
+    def unsubscribe_on_load(self, callback: Callable[[Image.Image, Image.Image, int], None]):
         self._callbacks.remove(callback)
 
-    def _trigger_load(self, loaded: Image.Image, unloaded: Image.Image) -> None:
+    def _trigger_load(self, loaded: Image.Image, unloaded: Image.Image, count: int) -> None:
         for callback in self._callbacks:
-            callback(loaded, unloaded)
+            callback(loaded, unloaded, count)
     
     def get_images(self) -> Dict[Path, Image.Image]:
         return self._images

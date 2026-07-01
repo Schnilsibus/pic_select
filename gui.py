@@ -9,7 +9,27 @@ from typing import Dict
 from pathlib import Path
 
 # TODO: remember user input (right now klicks are ignored if loader is busy) OR figure out how to not wait for loader (defeats the point)
+"""
+THE PROBLEM:
+What happens: multiple klicks overwhelm the system:
+- on_left/ right is triggerd
+    - this will show the next frame
+    - call the loader to update
+        - this will call on_load which creates new frames (VERY SLOW!!)
+If a new keyboard event is triggered before the GUI has created frames:
+    - this will show the next frame
+    - call the loader to update
+        - call on_load BUT this on_load has priority!! (idk why - it is beeing processed first!)
+        - SOOO the frames that are needed more in the future are created first - which is bad!
 
+SOLUTION:
+    - when calling show - check if the frame exists yet
+    - solve the order in which the frames are created - maybe py FiFo queeu implementation
+    - maybe restrict user input to smth reasonable research online
+        or logical whould be to only allow _preload_length quick clicks then wait 
+        or query how many frames created and ignore a click if it is requesting a not loaded frame - give visual feedback
+    - analize times for frame creation and try to create ImageFrames quicker
+"""
 _PADDING = 100
 
 def ask_file_name() -> str:
@@ -24,7 +44,6 @@ class Display(object):
     def __init__(self, loader: Loader, selector: Selector):
         self._loader = loader
         self._loader.subscribe_on_load(callback=self._on_load)
-        self._loader_busy = False
 
         self._selector = selector
         
@@ -53,37 +72,24 @@ class Display(object):
         self._ROOT.state("zoomed")
 
     def _on_left_arrow_key(self, event) -> None:
-        if self._loader_busy:
-            return None
-        else:
-            self._loader_busy = True
         path = self._loader.get_neighbor_path("Left")
         if path is not None:
             self.show(path=path)
             self._loader.backward()
-        else:
-            self._loader_busy = False
 
     def _on_right_arrow_key(self, event) -> None:
-        if self._loader_busy:
-            return None
-        else:
-            self._loader_busy = True
         path = self._loader.get_neighbor_path("Right")
         if path is not None:
             self.show(path=path)
             self._loader.forward()
-        else:
-            self._loader_busy = False
 
-    def _on_load(self, loaded: Image.Image, unloaded: Image.Image) -> None:
+    def _on_load(self, loaded: Image.Image, unloaded: Image.Image, count: int) -> None:
         if unloaded is not None:
             self._image_frames.pop(Path(unloaded.filename))
         if loaded is not None:
             self._create_image_frame(path=Path(loaded.filename), image=loaded)
         frames = ", ".join(sorted([str(int(k.name[4:8])) for k in self._image_frames.keys()]))
-        self._loader_busy = False
-        print(f"GUI   -UPDATE: {len(self._image_frames)} - {frames}\n")
+        print(f"GUI   -UPDATE {count:04d}: {len(self._image_frames)} - {frames}\n")
 
     def _on_space(self, event) -> None:
         path = self._loader.get_current_path()
