@@ -5,7 +5,7 @@ from loader import Loader
 from selector import Selector
 from image_frame import ImageFrame
 from clipboard import copy_files_to_clipboard
-from typing import Dict, List
+from typing import Dict
 from pathlib import Path
 
 # TODO: remember user input (right now klicks are ignored if loader is busy) OR figure out how to not wait for loader (defeats the point)

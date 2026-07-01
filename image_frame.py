@@ -46,7 +46,7 @@ class ImageFrame(tk.Frame):
         else:
             self.unselect() 
         
-        
+     
     def select(self):
         self._selected = True
         self._unselected_Label.pack_forget()

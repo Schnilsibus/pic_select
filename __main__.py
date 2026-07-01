@@ -1,5 +1,10 @@
 from pic_select import start
 
+# TODO: add comand line args
+# TODO: add fullscreen possibility
+# TODO: [make safe functionality]
+# TODO: possible to open directory instead of file
+
 def main():
     start()
 
