@@ -4,6 +4,7 @@ from pic_select import start
 # TODO: add fullscreen possibility
 # TODO: [make safe functionality]
 # TODO: possible to open directory instead of file
+# TODO: make resizable
 
 def main():
     start()

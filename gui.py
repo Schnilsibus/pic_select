@@ -22,13 +22,16 @@ If a new keyboard event is triggered before the GUI has created frames:
         - call on_load BUT this on_load has priority!! (idk why - it is beeing processed first!)
         - SOOO the frames that are needed more in the future are created first - which is bad!
 
+The Thing that takes forever is exif_transpose
+
 SOLUTION:
     - when calling show - check if the frame exists yet
-    - solve the order in which the frames are created - maybe py FiFo queeu implementation
+    - solve the order in which the frames are created - maybe py FiFo queeu implementation -> try remove root.update() calls
     - maybe restrict user input to smth reasonable research online
         or logical whould be to only allow _preload_length quick clicks then wait 
         or query how many frames created and ignore a click if it is requesting a not loaded frame - give visual feedback
-    - analize times for frame creation and try to create ImageFrames quicker
+    - analize times for frame creation and try to create ImageFrames quicker -> exif transpose takes forever
+        so move transpose logic to loader -> give the loader its own thread
 """
 _PADDING = 100
 
