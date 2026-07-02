@@ -13,9 +13,7 @@ class ImageFrame(tk.Frame):
         self._image = image
         self._selected = selected
 
-        display_image = ImageOps.exif_transpose(image=image)
-        display_image.thumbnail(size = max_image_size, resample = Image.Resampling.LANCZOS)
-        self._display_image = ImageTk.PhotoImage(display_image)
+        self._display_image = ImageTk.PhotoImage(image = ImageOps.contain(image = image, size = (max_image_size)))
 
         self._max_width = self._display_image.width()
         self._max_height = self._display_image.height()

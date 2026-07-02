@@ -26,12 +26,16 @@ The Thing that takes forever is exif_transpose
 
 SOLUTION:
     - when calling show - check if the frame exists yet
+
     - solve the order in which the frames are created - maybe py FiFo queeu implementation -> try remove root.update() calls
+
     - maybe restrict user input to smth reasonable research online
         or logical whould be to only allow _preload_length quick clicks then wait 
         or query how many frames created and ignore a click if it is requesting a not loaded frame - give visual feedback
+        
     - analize times for frame creation and try to create ImageFrames quicker -> exif transpose takes forever
         so move transpose logic to loader -> give the loader its own thread
+        check if transpose is needed first! --> maybe own implementation with np and the exif read module
 """
 _PADDING = 100
 
@@ -86,13 +90,12 @@ class Display(object):
             self.show(path=path)
             self._loader.forward()
 
-    def _on_load(self, loaded: Image.Image, unloaded: Image.Image, count: int) -> None:
+    def _on_load(self, loaded: Image.Image, unloaded: Image.Image) -> None:
         if unloaded is not None:
             self._image_frames.pop(Path(unloaded.filename))
         if loaded is not None:
             self._create_image_frame(path=Path(loaded.filename), image=loaded)
         frames = ", ".join(sorted([str(int(k.name[4:8])) for k in self._image_frames.keys()]))
-        print(f"GUI   -UPDATE {count:04d}: {len(self._image_frames)} - {frames}\n")
 
     def _on_space(self, event) -> None:
         path = self._loader.get_current_path()
@@ -122,11 +125,6 @@ class Display(object):
                                               image=image,
                                               max_image_size=(self._WIDTH - _PADDING, self._HEIGHT - _PADDING),
                                               selected=self._selector.is_selected(path))
-
-    def create_display_image(self, image: Image.Image) -> ImageTk.PhotoImage:
-        path = self._loader.get_current_path()
-        display_image = ImageOps.exif_transpose(image=image)
-        display_image.thumbnail(size = (self._WIDTH - _PADDING, self._HEIGHT - _PADDING), resample = Image.Resampling.LANCZOS)
 
     def start_display(self) -> None:
         self._ROOT.deiconify()
