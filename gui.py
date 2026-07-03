@@ -33,9 +33,9 @@ SOLUTION:
         or logical whould be to only allow _preload_length quick clicks then wait 
         or query how many frames created and ignore a click if it is requesting a not loaded frame - give visual feedback
         
-    - analize times for frame creation and try to create ImageFrames quicker -> exif transpose takes forever
-        so move transpose logic to loader -> give the loader its own thread
-        check if transpose is needed first! --> maybe own implementation with np and the exif read module
+    - analize times for frame creation and try to create ImageFrames quicker 
+        -> exif transpose takes forever -> actually it is getting the exif data
+        give the loader its own thread
 """
 _PADDING = 100
 
