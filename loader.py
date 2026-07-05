@@ -1,8 +1,8 @@
 from PIL import Image, ImageOps
 from pathlib import Path
-from typing import Dict, Callable, Set, Literal, List
+from typing import Dict, Callable, Set, Literal, List, Tuple
 
-
+# TODO: trigger 2 seperate events: loaded and unloaded --> do not trigger in forward/ backward but in _load_image() and _unload_image() - needs to be created and used internally
 class Loader(object):
 
     def __init__(self, path: Path, preload_length: int = 2):
@@ -16,9 +16,6 @@ class Loader(object):
         self._files: List[Path] = [f for f in self._directory.iterdir() if f.is_file()]
         self._files.sort()
         self._current_index: int = self._files.index(path)
-
-        for i in range(-self._preload_length, self._preload_length + 1, 1):
-            self._load_image(relative=i)
 
     def _get_path(self, relative: int = 0) -> Path:
         index = self._current_index + relative
@@ -41,12 +38,23 @@ class Loader(object):
         self._images[path] = image
         return image
     
-    def _trigger_load(self, loaded: Image.Image, unloaded: Image.Image) -> None:
+    def _trigger_load(self, loaded: Image.Image, unloaded_path: Path) -> None:
         for callback in self._callbacks:
-            callback(loaded, unloaded)
+            callback((loaded.filename, loaded), unloaded_path)
+
+    def preload_images(self) -> None:
+        for i in range(-self._preload_length, self._preload_length + 1, 1):
+            self._load_image(relative=i)
 
     def get_current_image(self) -> Image.Image:
         return self._images[self.get_current_path()]
+    
+    # TODO: What if Image is not loaded yet?
+    def get_image(self, path: Path) -> Image.Image:
+        if path in self._images:
+            return self._images[path]
+        else:
+            raise KeyError(f"'{str(path)}' has not yet been loaded!")
     
     def get_current_path(self) -> Path:
         return self._get_path()
@@ -59,6 +67,9 @@ class Loader(object):
     
     def get_all_paths(self) -> List[Path]:
         return self._files
+    
+    def get_loaded_paths(self) -> List[Path]:
+        return list(self._images.keys())
 
     def forward(self) -> None:
         self._current_index = self._current_index + 1
@@ -69,10 +80,8 @@ class Loader(object):
         loaded = self._load_image(relative=self._preload_length)
         unload_path = self._get_path(relative=-self._preload_length - 1)
         if unload_path in self._images:
-            unloaded = self._images.pop(self._get_path(relative=-self._preload_length - 1))
-        else:
-            unloaded = None
-        self._trigger_load(loaded=loaded, unloaded=unloaded)
+            self._images.pop(self._get_path(relative=-self._preload_length - 1))
+        self._trigger_load(loaded=loaded, unloaded_path=unload_path)
 
     def backward(self) -> None:
         self._current_index = self._current_index - 1
@@ -94,10 +103,10 @@ class Loader(object):
     def get_directory(self) -> Path:
         return self._directory
     
-    def subscribe_on_load(self, callback: Callable[[Image.Image, Image.Image], None]):
+    def subscribe_on_load(self, callback: Callable[[Tuple[Path, Image.Image], Path], None]):
         self._callbacks.add(callback)
     
-    def unsubscribe_on_load(self, callback: Callable[[Image.Image, Image.Image], None]):
+    def unsubscribe_on_load(self, callback: Callable[[Tuple[Path, Image.Image], Path], None]):
         self._callbacks.remove(callback)
     
     def get_images(self) -> Dict[Path, Image.Image]:

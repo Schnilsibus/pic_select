@@ -3,7 +3,7 @@ from tkinter import filedialog
 from PIL import Image, ImageTk, ImageOps
 from loader import Loader
 from selector import Selector
-from image_frame import ImageFrame
+from image_frame import ImageFrame, ImageFrameFactory
 from clipboard import copy_files_to_clipboard
 from typing import Dict
 from pathlib import Path
@@ -48,14 +48,13 @@ def ask_file_name() -> str:
 
 class GuiControl(object):
     
-    def __init__(self, loader: Loader, selector: Selector):
+    def __init__(self, master: tk.Tk, loader: Loader, selector: Selector):
+        self._ROOT: tk.Tk = master
         self._loader = loader
-
         self._selector = selector
         
-        self._ROOT: tk.Tk = tk.Tk()
         self._ROOT.title(str(self._loader.get_directory()))
-        self._ROOT.withdraw()
+        # self._ROOT.withdraw()
         self._ROOT.bind("<Left>", self._on_left_arrow_key)
         self._ROOT.bind("<Right>", self._on_right_arrow_key)
         self._ROOT.bind("<space>", self._on_space)
@@ -65,28 +64,35 @@ class GuiControl(object):
         self._ROOT.bind("<Control-A>", self._on_strg_a)
         self._ROOT.bind("<Escape>", self._on_escape)
 
-        self._current_image_name: tk.StringVar = tk.StringVar()
-        self._current_image_label: tk.Label = tk.Label(master=self._ROOT, textvariable=self._current_image_name, font=("Arial, 18"))
+        # self._ROOT.deiconify()
+        self._ROOT.state("zoomed")
+        self._ROOT.focus_force()
+        self._ROOT.lift()
 
+        self._WIDTH: int = self._ROOT.winfo_width()
+        self._HEIGHT: int = self._ROOT.winfo_height()
+
+        self._current_image_name: tk.StringVar = tk.StringVar()
+        self._current_image_label: tk.Label = tk.Label(master=self._ROOT,
+                                                       textvariable=self._current_image_name,
+                                                       font=("Arial, 18"))
+
+        self._image_frame_factory = ImageFrameFactory(loader=self._loader,
+                                                      max_image_size=(self._WIDTH - _PADDING, self._HEIGHT - _PADDING))
         self._current_image_frame: ImageFrame = None
 
-        self._WIDTH: int = None
-        self._HEIGHT: int = None
-
-        self._image_frames: Dict[Path, ImageFrame] = {}
-        
-        self._ROOT.state("zoomed")
+        self._current_image_label.place(relx=0.5, rely=1.0, anchor=tk.S)
 
     def _on_left_arrow_key(self, event) -> None:
         path = self._loader.get_neighbor_path("Left")
         if path is not None:
-            self.show(path=path)
+            self.update_image_frame(path=path)
             self._loader.backward()
 
     def _on_right_arrow_key(self, event) -> None:
         path = self._loader.get_neighbor_path("Right")
         if path is not None:
-            self.show(path=path)
+            self.update_image_frame(path=path)
             self._loader.forward()
 
     def _on_space(self, event) -> None:
@@ -107,33 +113,18 @@ class GuiControl(object):
         self._selector.unselect_all()
         for frame in self._image_frames.values():
             frame.unselect()
-
-    def _create_image_frames(self) -> None:
-        for path, image in self._loader.get_images().items():
-            self._create_image_frame(path=path, image=image)
-
-    def start_display(self) -> None:
-        self._ROOT.deiconify()
-        self._ROOT.focus_force()
-        self._ROOT.lift()
-
-        self._WIDTH: int = self._ROOT.winfo_width()
-        self._HEIGHT: int = self._ROOT.winfo_height()
-
-        self._current_image_label.place(relx=0.5, rely=1.0, anchor=tk.S)
-
-        self._create_image_frames()
-        self.show(path=self._loader.get_current_path())
         
-        self._ROOT.mainloop()
-        
-    def show(self, path: Path) -> None:
+    def update_image_frame(self, path: Path) -> None:
         if self._current_image_frame is not None:
             self._current_image_frame.place_forget()
 
         self._current_image_name.set(value=path.name)
 
-        self._current_image_frame = self._image_frames[path]
+        try:
+            self._current_image_frame = self._image_frame_factory.get_frame(path=path)
+        except KeyError as ex:
+            raise ex
 
         self._current_image_frame.place(relx=0.5, rely=0.5, anchor="center")
-        self._ROOT.update()
+        
+        # self._ROOT.update()
