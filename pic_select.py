@@ -1,10 +1,10 @@
 from loader import Loader
 from selector import Selector
-from gui import Display, ask_file_name
+from gui import GuiControl, ask_file_name
 from pathlib import Path
 
 def start():
     selector = Selector()
     loader = Loader(path=Path(ask_file_name()))
-    display = Display(loader=loader, selector=selector)
+    display = GuiControl(loader=loader, selector=selector)
     display.start_display()
