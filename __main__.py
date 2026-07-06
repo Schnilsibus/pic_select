@@ -1,4 +1,4 @@
-from pic_select import start
+from .pic_select import start
 
 # TODO: add comand line args
 # TODO: add fullscreen possibility

@@ -1,12 +1,11 @@
 import tkinter as tk
 from tkinter import filedialog
-from PIL import Image, ImageTk, ImageOps
-from loader import Loader
-from selector import Selector
-from image_frame import ImageFrame, ImageFrameFactory
-from clipboard import copy_files_to_clipboard
-from typing import Dict
 from pathlib import Path
+
+from .loader import Loader
+from .selector import Selector
+from .image_frame import ImageFrame, ImageFrameFactory
+from .clipboard import copy_files_to_clipboard
 
 # TODO: remember user input (right now klicks are ignored if loader is busy) OR figure out how to not wait for loader (defeats the point)
 """
@@ -54,7 +53,6 @@ class GuiControl(object):
         self._selector = selector
         
         self._ROOT.title(str(self._loader.get_directory()))
-        # self._ROOT.withdraw()
         self._ROOT.bind("<Left>", self._on_left_arrow_key)
         self._ROOT.bind("<Right>", self._on_right_arrow_key)
         self._ROOT.bind("<space>", self._on_space)
@@ -64,7 +62,6 @@ class GuiControl(object):
         self._ROOT.bind("<Control-A>", self._on_strg_a)
         self._ROOT.bind("<Escape>", self._on_escape)
 
-        # self._ROOT.deiconify()
         self._ROOT.state("zoomed")
         self._ROOT.focus_force()
         self._ROOT.lift()
@@ -77,7 +74,9 @@ class GuiControl(object):
                                                        textvariable=self._current_image_name,
                                                        font=("Arial, 18"))
 
-        self._image_frame_factory = ImageFrameFactory(loader=self._loader,
+        self._image_frame_factory = ImageFrameFactory(master=self._ROOT,
+                                                      loader=self._loader,
+                                                      selector=self._selector,
                                                       max_image_size=(self._WIDTH - _PADDING, self._HEIGHT - _PADDING))
         self._current_image_frame: ImageFrame = None
 
@@ -106,13 +105,11 @@ class GuiControl(object):
     def _on_strg_a(self, event) -> None:
         paths = self._loader.get_all_paths()
         self._selector.multi_select(keys=paths)
-        for frame in self._image_frames.values():
-            frame.select()
+        self._image_frame_factory.select_all()
     
     def _on_escape(self, event) -> None:
         self._selector.unselect_all()
-        for frame in self._image_frames.values():
-            frame.unselect()
+        self._image_frame_factory.select_all(unselect=True)
         
     def update_image_frame(self, path: Path) -> None:
         if self._current_image_frame is not None:
@@ -120,11 +117,14 @@ class GuiControl(object):
 
         self._current_image_name.set(value=path.name)
 
+        # TODO: Implement wait for frame_factory functionality:
+        #    add callback to frame_factory that gets called if specific image is loaded
+        #    display dummy frame - loading image "..." in the mean time
+        #    could add: if this case happens -> everything is kinda reset -> load to display more or less re initialize loader -> give Prio to the image that should be displayed at the moment; reuse already loaded images of course 
+
         try:
             self._current_image_frame = self._image_frame_factory.get_frame(path=path)
         except KeyError as ex:
             raise ex
 
         self._current_image_frame.place(relx=0.5, rely=0.5, anchor="center")
-        
-        # self._ROOT.update()
