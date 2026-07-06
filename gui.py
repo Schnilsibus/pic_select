@@ -1,10 +1,11 @@
 import tkinter as tk
 from tkinter import filedialog
 from pathlib import Path
+import datetime
 
 from .loader import Loader
 from .selector import Selector
-from .image_frame import ImageFrame, ImageFrameFactory
+from .image_frame import ImageFrame, ImageFrameFactory, LoadFrame
 from .clipboard import copy_files_to_clipboard
 
 # TODO: remember user input (right now klicks are ignored if loader is busy) OR figure out how to not wait for loader (defeats the point)
@@ -78,17 +79,23 @@ class GuiControl(object):
                                                       loader=self._loader,
                                                       selector=self._selector,
                                                       max_image_size=(self._WIDTH - _PADDING, self._HEIGHT - _PADDING))
+        self._image_frame_factory.subscribe_on_frame_creation(callback=self._on_new_frame_created)
         self._current_image_frame: ImageFrame = None
+        self._load_frame: LoadFrame = LoadFrame(master=self._ROOT)
 
         self._current_image_label.place(relx=0.5, rely=1.0, anchor=tk.S)
 
     def _on_left_arrow_key(self, event) -> None:
+        print()
+        print(f"{datetime.datetime.now().strftime('%H:%M:%S.%f')} - KEY RIGHT")
         path = self._loader.get_neighbor_path("Left")
         if path is not None:
             self.update_image_frame(path=path)
             self._loader.backward()
 
     def _on_right_arrow_key(self, event) -> None:
+        print()
+        print(f"{datetime.datetime.now().strftime('%H:%M:%S.%f')} - Key RIGHT")
         path = self._loader.get_neighbor_path("Right")
         if path is not None:
             self.update_image_frame(path=path)
@@ -110,21 +117,84 @@ class GuiControl(object):
     def _on_escape(self, event) -> None:
         self._selector.unselect_all()
         self._image_frame_factory.select_all(unselect=True)
+    
+    def _on_new_frame_created(self, path: Path) -> None:
+        if self._current_image_frame is not None:
+            return None
+        if self._current_image_name.get() == path.name:
+            self.update_image_frame(path=path)
         
     def update_image_frame(self, path: Path) -> None:
+        self._load_frame.place_forget()
+        
         if self._current_image_frame is not None:
             self._current_image_frame.place_forget()
 
         self._current_image_name.set(value=path.name)
 
-        # TODO: Implement wait for frame_factory functionality:
-        #    add callback to frame_factory that gets called if specific image is loaded
-        #    display dummy frame - loading image "..." in the mean time
-        #    could add: if this case happens -> everything is kinda reset -> load to display more or less re initialize loader -> give Prio to the image that should be displayed at the moment; reuse already loaded images of course 
-
+        # TODO: could add: if this case happens -> everything is kinda reset -> load to display more or less re initialize loader -> give Prio to the image that should be displayed at the moment; reuse already loaded images of course 
         try:
             self._current_image_frame = self._image_frame_factory.get_frame(path=path)
         except KeyError as ex:
-            raise ex
+            self._current_image_frame = None
+            self._load_frame.set_text(name=path.name)
+            self._load_frame.place(relx=0.5, rely=0.5, anchor="center")
+            return None
 
         self._current_image_frame.place(relx=0.5, rely=0.5, anchor="center")
+
+        # TODO: do not use update() -> will mess up event order!! instead stack frames and use tk_raise()
+        self._ROOT.update()
+        print(f"{datetime.datetime.now().strftime('%H:%M:%S.%f')} - showing image {path.name}")
+
+"""
+https://pythonprogramming.net/change-show-new-frame-tkinter/
+
+The best and fastest way to show a new frame is to stack all frames on top of each other using the same grid cell or place options, and bring the desired frame to the top using .tkraise(). This is incredibly fast because all frames are pre-loaded in memory.Why it's the best:Instantaneous: No time is wasted destroying and recreating widgets.Flicker-free: The background doesn't tear, and the GUI state is preserved.Modular: It keeps your code organized when using an Object-Oriented (OO) approach.How to do it (Step-by-Step)Initialize all your frames in the same location over the root window (e.g., using grid(row=0, column=0, sticky="nsew")).Hide the inactive frames by placing them on the bottom of the stack.Call frame.tkraise() on the frame you want to see.Code ExampleHere is the optimal setup for a fast, multi-frame application:pythonimport tkinter as tk
+
+class App(tk.Tk):
+    def __init__(self):
+        super().__init__()
+        self.geometry("400x300")
+        
+        # Container to stack frames
+        container = tk.Frame(self)
+        container.pack(fill="both", expand=True)
+        container.grid_rowconfigure(0, weight=1)
+        container.grid_columnconfigure(0, weight=1)
+
+        self.frames = {}
+
+        # Pre-load and stack all frames in the same grid slot
+        for F in (HomeFrame, SettingsFrame):
+            frame = F(container, self)
+            self.frames[F] = frame
+            frame.grid(row=0, column=0, sticky="nsew")
+
+        # Show the Home frame first
+        self.show_frame(HomeFrame)
+
+    def show_frame(self, cont):
+        # Brings the selected frame to the top of the stack
+        frame = self.frames[cont]
+        frame.tkraise()
+
+class HomeFrame(tk.Frame):
+    def __init__(self, parent, controller):
+        super().__init__(parent)
+        tk.Label(self, text="Home Page").pack(pady=20)
+        tk.Button(self, text="Go to Settings", 
+                  command=lambda: controller.show_frame(SettingsFrame)).pack()
+
+class SettingsFrame(tk.Frame):
+    def __init__(self, parent, controller):
+        super().__init__(parent)
+        tk.Label(self, text="Settings Page").pack(pady=20)
+        tk.Button(self, text="Back to Home", 
+                  command=lambda: controller.show_frame(HomeFrame)).pack()
+
+if __name__ == "__main__":
+    app = App()
+    app.mainloop()
+Verwende Code mit Vorsicht.
+"""

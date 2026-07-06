@@ -1,6 +1,7 @@
 from PIL import Image, ImageOps
 from pathlib import Path
 from typing import Dict, Callable, Set, Literal, List
+import datetime
 
 _EXIF_FORMATS = ["JPEG", "TIFF"]
 
@@ -32,13 +33,14 @@ class Loader(object):
         
         image = Image.open(path)
 
-        if image.format in _EXIF_FORMATS:
+        if image.format in _EXIF_FORMATS or image.format not in _EXIF_FORMATS:
             exif = image.getexif()
             orientation = exif.get(0x0112)
             if orientation is not None and orientation > 1:
                 image = ImageOps.exif_transpose(image=image)
         
         self._images[path] = image
+        print(f"{datetime.datetime.now().strftime('%H:%M:%S.%f')} - loaded image {path.name}")
         self._trigger_load(image=image, path=path)
         return image
 

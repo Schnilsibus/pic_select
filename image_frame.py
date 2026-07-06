@@ -1,7 +1,8 @@
 import tkinter as tk
 from PIL import Image, ImageOps, ImageTk
-from typing import Tuple, Dict
+from typing import Tuple, Dict, Callable, Set
 from pathlib import Path
+import datetime
 
 from .loader import Loader
 from .selector import Selector
@@ -79,6 +80,7 @@ class ImageFrameFactory:
         self._master = master
         self._selector = selector
         self._max_image_size = max_image_size
+        self._frame_creation_callbacks: Set[Callable[[Path], None]] = set()
 
         loader.subscribe_on_load(callback = self._on_load)
         loader.subscribe_on_unload(callback = self._on_unload)
@@ -90,11 +92,17 @@ class ImageFrameFactory:
         if unloaded is not None:
             self._frames.pop(unloaded)
 
+    def _trigger_frame_creation(self, path: Path):
+        for callback in self._frame_creation_callbacks:
+            callback(path)
+
     def _create_image_frame(self, path: Path, image: Image.Image) -> None:
         self._frames[path] = ImageFrame(master=self._master,
                                         image=image,
                                         max_image_size=self._max_image_size,
                                         selected=self._selector.is_selected(path))
+        print(f"{datetime.datetime.now().strftime('%H:%M:%S.%f')} - framed image {path.name}")
+        self._trigger_frame_creation(path=path)
 
     def get_frame(self, path: Path) -> ImageFrame:
         try:
@@ -108,3 +116,25 @@ class ImageFrameFactory:
                 frame.unselect()
             else:
                 frame.select()
+
+    def subscribe_on_frame_creation(self, callback: Callable[[Path], None]) -> None:
+        self._frame_creation_callbacks.add(callback)
+    
+    def unsubscribe_on_frame_creation(self, callback: Callable[[Path], None]) -> None:
+        self._frame_creation_callbacks.remove(callback)
+
+
+
+class LoadFrame(tk.Frame):
+
+    def __init__(self, master):
+        super().__init__(master=master)
+
+        self._text: tk.StringVar = tk.StringVar()
+        self._label: tk.Label = tk.Label(master=self,
+                                         textvariable=self._text,
+                                         font=("Arial, 18"))
+        self._label.pack()
+
+    def set_text(self, name: str) -> None:
+        self._text.set(f"loading image '{name}'")
