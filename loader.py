@@ -28,6 +28,7 @@ class Loader(object):
     
     def _load_image(self, relative: int = 0) -> Image.Image:
         path = self._get_path(relative=relative)
+        print(f"loading image {path.name}")
         if path is None:
             return None
         
@@ -40,12 +41,12 @@ class Loader(object):
                 image = ImageOps.exif_transpose(image=image)
         
         self._images[path] = image
-        print(f"{datetime.datetime.now().strftime('%H:%M:%S.%f')} - loaded image {path.name}")
         self._trigger_load(image=image, path=path)
         return image
 
     def _unload_image(self, relative: int = 0) -> Path:
         path = self._get_path(relative=relative)
+        print(f"unloading image {path.name}")
         if path not in self._images:
             return None
         self._trigger_unload(unloaded_path=path)
