@@ -28,7 +28,6 @@ class Loader(object):
     
     def _load_image(self, relative: int = 0) -> Image.Image:
         path = self._get_path(relative=relative)
-        print(f"loading image {path.name}")
         if path is None:
             return None
         
@@ -41,16 +40,20 @@ class Loader(object):
                 image = ImageOps.exif_transpose(image=image)
         
         self._images[path] = image
+        print(f"loaded image {path.name}")
         self._trigger_load(image=image, path=path)
         return image
 
     def _unload_image(self, relative: int = 0) -> Path:
         path = self._get_path(relative=relative)
-        print(f"unloading image {path.name}")
+        
         if path not in self._images:
             return None
+        
+        self._images.pop(path)
+        print(f"unloaded image {path.name}")
         self._trigger_unload(unloaded_path=path)
-        return self._images.pop(path)
+        return path
     
     def _trigger_load(self, image: Image.Image, path: Path) -> None:
         for callback in self._load_callbacks:
@@ -128,3 +131,38 @@ class Loader(object):
 
     def get_images(self) -> Dict[Path, Image.Image]:
         return self._images
+
+# TODO: do not run each step in order; but do it in one step (if I want a picture 5 ahead do not load the others firs)
+class LoaderWorker(object):
+
+    def __init__(self, loader: Loader):
+        self._loader = loader
+
+        self._relative_request = 0
+
+    def _run(self) -> None:
+        while True:
+            steps = abs(self._relative_request)
+            if self._relative_request < 0:
+                self._execute_backwards_steps(step_count=steps)
+            elif self._relative_request > 0:
+                self._execute_forwards_steps(step_count=steps)
+            self._relative_request = 0
+                
+
+    def _execute_backwards_steps(self, step_count: int) -> None:
+        for i in range(step_count):
+            self._loader.backward()
+
+    def _execute_forwards_steps(self, step_count: int) -> None:
+        for i in range(step_count):
+            self._loader.forward()
+
+    def queue_forward(self) -> None:
+        self._relative_request = self._relative_request + 1
+
+    def queue_backward(self) -> None:
+        self._relative_request = self._relative_request - 1
+
+    def mainloop(self) -> None:
+        self._run

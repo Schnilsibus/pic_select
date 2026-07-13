@@ -72,7 +72,7 @@ class ImageFrame(tk.Frame):
             self.select()
 
 
-# TODO: Problem: many quick clicks will cause to try and unload frames that have not been created!!
+# TODO: Problem: many quick clicks will cause to try and unload frames that have not been created!
 class ImageFrameFactory:
 
     def __init__(self, master: tk.Widget, loader: Loader, selector: Selector, max_image_size: Tuple[int, int]):
@@ -97,11 +97,11 @@ class ImageFrameFactory:
             callback(path)
 
     def _create_image_frame(self, path: Path, image: Image.Image) -> None:
-        print(f"framing image {path.name}")
         self._frames[path] = ImageFrame(master=self._master,
                                         image=image,
                                         max_image_size=self._max_image_size,
                                         selected=self._selector.is_selected(path))
+        print(f"framed image {path.name}")
         self._trigger_frame_creation(path=path)
 
     def get_frame(self, path: Path) -> ImageFrame:

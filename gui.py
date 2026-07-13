@@ -7,31 +7,12 @@ from .selector import Selector
 from .image_frame import ImageFrame, ImageFrameFactory, LoadFrame
 from .clipboard import copy_files_to_clipboard
 
-# TODO: remember user input (right now klicks are ignored if loader is busy) OR figure out how to not wait for loader (defeats the point)
-"""
-THE PROBLEM:
-What happens: multiple klicks overwhelm the system:
-- on_left/ right is triggerd
-    - this will show the next frame
-    - call the loader to update
-        - this will call on_load which creates new frames (VERY SLOW!!)
-If a new keyboard event is triggered before the GUI has created frames:
-    - this will show the next frame
-    - call the loader to update
-        - call on_load BUT this on_load has priority!! (idk why - it is beeing processed first!)
-        - SOOO the frames that are needed more in the future are created first - which is bad!
 
-The Thing that takes forever is exif_transpose
+# TODO: event order messed up again -> now its time to introduce worker thread :)
 
-SOLUTION:
 
-    - maybe restrict user input to smth reasonable research online
-        or logical whould be to only allow _preload_length quick clicks then wait 
-        or query how many frames created and ignore a click if it is requesting a not loaded frame - give visual feedback
-        
-    - give the loader its own thread
-"""
 _PADDING = 100
+
 
 def ask_file_name() -> Path:
     _root = tk.Tk()
@@ -98,6 +79,7 @@ class GuiControl(object):
         self.refresh_display()
         
         self._loader.backward()
+        print()
 
     def _on_right_arrow_key(self, event) -> None:
         print("RIGHT")
@@ -113,6 +95,7 @@ class GuiControl(object):
         self.refresh_display()
         
         self._loader.forward()
+        print()
 
     def _on_space(self, event) -> None:
         path = self._loader.get_current_path()
@@ -139,7 +122,6 @@ class GuiControl(object):
         
         self.refresh_display()
 
-    # TODO: figure out proper first loading logic 
     def refresh_display(self) -> None:
         self._separator_frame.tkraise()
         
