@@ -1,9 +1,11 @@
 from PIL import Image, ImageOps
 from pathlib import Path
 from typing import Dict, Callable, Set, Literal, List
-import datetime
+from queue import Queue
 
 _EXIF_FORMATS = ["JPEG", "TIFF"]
+_FORWARD_REQUEST = "forward"
+_BACKWARD_REQUEST = "backward"
 
 class Loader(object):
 
@@ -20,8 +22,11 @@ class Loader(object):
         self._files.sort()
         self._current_index: int = self._files.index(path)
 
-    def _get_path(self, relative: int = 0) -> Path:
-        index = self._current_index + relative
+    def _get_path(self, relative: int = 0, anchor=None) -> Path:
+        anchor_index = self._current_index if anchor is None else self.get_all_paths().index(anchor)
+
+        index = self._current_index + (self._current_index - anchor_index) + relative
+
         if index not in range(len(self._files)):
             return None
         return self._files[index]
@@ -81,11 +86,11 @@ class Loader(object):
     def get_current_path(self) -> Path:
         return self._get_path()
     
-    def get_neighbor_path(self, neighbor: Literal["Left", "Right"]) -> Path:
+    def get_neighbor_path(self, neighbor: Literal["Left", "Right"], anchor: Path = None) -> Path:
         if neighbor == "Left":
-            return self._get_path(relative=-1)
+            return self._get_path(relative=-1, anchor=anchor)
         if neighbor == "Right":
-            return self._get_path(relative=1)
+            return self._get_path(relative=1, anchor=anchor)
     
     def get_all_paths(self) -> List[Path]:
         return self._files
@@ -137,32 +142,45 @@ class LoaderWorker(object):
 
     def __init__(self, loader: Loader):
         self._loader = loader
-
-        self._relative_request = 0
+        
+        self._queue = Queue()
 
     def _run(self) -> None:
         while True:
-            steps = abs(self._relative_request)
-            if self._relative_request < 0:
-                self._execute_backwards_steps(step_count=steps)
-            elif self._relative_request > 0:
-                self._execute_forwards_steps(step_count=steps)
-            self._relative_request = 0
-                
+            request = self._queue.get()
+            self._execute_requests(first_request=request)
 
-    def _execute_backwards_steps(self, step_count: int) -> None:
-        for i in range(step_count):
-            self._loader.backward()
+    def _execute_requests(self, first_request: str) -> None:
+        requests = [first_request]
+        while not self._queue.empty():
+            requests.append(self._queue.get_nowait())
+        
+        for request in requests:
+            if request == _FORWARD_REQUEST:
+                self._execute_forwards_step()
+                self._queue.task_done()
+            elif request == _BACKWARD_REQUEST:
+                self._execute_backwards_step()
+                self._queue.task_done()
 
-    def _execute_forwards_steps(self, step_count: int) -> None:
-        for i in range(step_count):
-            self._loader.forward()
+    def _execute_backwards_step(self) -> None:
+        self._loader.backward()
+        print("executed backward")
+
+    def _execute_forwards_step(self) -> None:
+        self._loader.forward()
+        print("executed forward")
 
     def queue_forward(self) -> None:
-        self._relative_request = self._relative_request + 1
+        self._queue.put(_FORWARD_REQUEST)
+        print(f"requested forward")
 
     def queue_backward(self) -> None:
-        self._relative_request = self._relative_request - 1
+        self._queue.put(_BACKWARD_REQUEST)
+        print(f"requested backward")
 
     def mainloop(self) -> None:
-        self._run
+        self._run()
+
+    def get_loader(self) -> Loader:
+        return self._loader

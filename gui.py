@@ -2,13 +2,10 @@ import tkinter as tk
 from tkinter import filedialog
 from pathlib import Path
 
-from .loader import Loader
+from .loader import LoaderWorker
 from .selector import Selector
 from .image_frame import ImageFrame, ImageFrameFactory, LoadFrame
 from .clipboard import copy_files_to_clipboard
-
-
-# TODO: event order messed up again -> now its time to introduce worker thread :)
 
 
 _PADDING = 100
@@ -23,10 +20,12 @@ def ask_file_name() -> Path:
 
 class GuiControl(object):
     
-    def __init__(self, master: tk.Tk, loader: Loader, selector: Selector):
+    def __init__(self, master: tk.Tk, loader_worker: LoaderWorker, selector: Selector):
         self._ROOT: tk.Tk = master
-        self._loader = loader
+        self._loader_worker = loader_worker
         self._selector = selector
+
+        self._loader = self._loader_worker.get_loader()
         
         self._ROOT.title(str(self._loader.get_directory()))
         self._ROOT.bind("<Left>", self._on_left_arrow_key)
@@ -65,12 +64,14 @@ class GuiControl(object):
 
         self._current_image_label.place(relx=0.5, rely=1.0, anchor=tk.S)
 
+    # TODO: cant rely on loader anymore to get up to date data on which is the next path to display as it is updated async!! -> use added anchor argument + rememer whole path for current image
     def _on_left_arrow_key(self, event) -> None:
         print("LEFT")
         if self.is_waiting_on_loader():
             return None
 
         path = self._loader.get_neighbor_path("Left")
+        print(f"try update to {path.name}")
 
         if path is None:
             return None
@@ -78,8 +79,8 @@ class GuiControl(object):
         self.update_current_image(path=path)
         self.refresh_display()
         
-        self._loader.backward()
-        print()
+        self._loader_worker.queue_backward()
+
 
     def _on_right_arrow_key(self, event) -> None:
         print("RIGHT")
@@ -94,8 +95,7 @@ class GuiControl(object):
         self.update_current_image(path=path)
         self.refresh_display()
         
-        self._loader.forward()
-        print()
+        self._loader_worker.queue_forward()
 
     def _on_space(self, event) -> None:
         path = self._loader.get_current_path()
