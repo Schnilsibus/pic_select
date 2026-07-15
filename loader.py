@@ -22,10 +22,10 @@ class Loader(object):
         self._files.sort()
         self._current_index: int = self._files.index(path)
 
-    def _get_path(self, relative: int = 0, anchor=None) -> Path:
+    def _get_path(self, relative: int = 0, anchor = None) -> Path:
         anchor_index = self._current_index if anchor is None else self.get_all_paths().index(anchor)
 
-        index = self._current_index + (self._current_index - anchor_index) + relative
+        index = self._current_index + (anchor_index - self._current_index) + relative
 
         if index not in range(len(self._files)):
             return None
@@ -137,7 +137,7 @@ class Loader(object):
     def get_images(self) -> Dict[Path, Image.Image]:
         return self._images
 
-# TODO: do not run each step in order; but do it in one step (if I want a picture 5 ahead do not load the others firs)
+# TODO: do not run each step in order; but do it in one step (if I want a picture 5 ahead do not load the others first)
 class LoaderWorker(object):
 
     def __init__(self, loader: Loader):

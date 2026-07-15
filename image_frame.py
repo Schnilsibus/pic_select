@@ -72,7 +72,6 @@ class ImageFrame(tk.Frame):
             self.select()
 
 
-# TODO: Problem: many quick clicks will cause to try and unload frames that have not been created!
 class ImageFrameFactory:
 
     def __init__(self, master: tk.Widget, loader: Loader, selector: Selector, max_image_size: Tuple[int, int]):

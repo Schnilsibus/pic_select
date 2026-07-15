@@ -50,27 +50,27 @@ class GuiControl(object):
                                                       max_image_size=(self._WIDTH - _PADDING, self._HEIGHT - _PADDING))
         self._image_frame_factory.subscribe_on_frame_creation(callback=self._on_new_frame_created)
 
+        self._current_image_path: Path = None
         self._current_image_frame: ImageFrame = None
         self._current_image_name: tk.StringVar = tk.StringVar()
         self._current_image_label: tk.Label = tk.Label(master=self._ROOT,
                                                        textvariable=self._current_image_name,
                                                        font=("Arial, 18"),
                                                        background="white")
+        self._current_image_label.place(relx=0.5, rely=1.0, anchor=tk.S)
 
         self._load_frame: LoadFrame = LoadFrame(master=self._ROOT)
         self._load_frame.place(relx=0.5, rely=0.5, anchor=tk.CENTER, relheight=1.0, relwidth=1.0)
         self._separator_frame = tk.Frame(master=self._ROOT, background="white")
         self._separator_frame.place(relx=0.5, rely=0.5, anchor=tk.CENTER, relheight=1.0, relwidth=1.0)
 
-        self._current_image_label.place(relx=0.5, rely=1.0, anchor=tk.S)
-
-    # TODO: cant rely on loader anymore to get up to date data on which is the next path to display as it is updated async!! -> use added anchor argument + rememer whole path for current image
+    # TODO: only ignore user input if it is going into the direction of unloaded images! but allow to go back to loaded images
     def _on_left_arrow_key(self, event) -> None:
         print("LEFT")
         if self.is_waiting_on_loader():
             return None
 
-        path = self._loader.get_neighbor_path("Left")
+        path = self._loader.get_neighbor_path("Left", anchor=self._current_image_path)
         print(f"try update to {path.name}")
 
         if path is None:
@@ -87,7 +87,7 @@ class GuiControl(object):
         if self.is_waiting_on_loader():
             return None
         
-        path = self._loader.get_neighbor_path("Right")
+        path = self._loader.get_neighbor_path("Right", anchor=self._current_image_path)
         
         if path is None:
             return None
@@ -117,7 +117,7 @@ class GuiControl(object):
     def _on_new_frame_created(self, path: Path) -> None:
         self._image_frame_factory.get_frame(path=path).place(relx=0.5, rely=0.5, anchor="center")
         
-        if self.is_waiting_on_loader() and self._current_image_name.get() == path.name:
+        if self.is_waiting_on_loader() and self._current_image_path == path:
             self.update_current_image(path=path)
         
         self.refresh_display()
@@ -132,6 +132,7 @@ class GuiControl(object):
             self._current_image_label.tkraise()
         
     def update_current_image(self, path: Path) -> None:
+        self._current_image_path = path
         self._current_image_name.set(value=path.name)
         
         try:

@@ -5,7 +5,6 @@ from .loader import Loader, LoaderWorker
 from .selector import Selector
 from .gui import GuiControl, ask_file_name
 
-# TODO: Add functionality: first image is displayed as soon as it is loaded -> shoudl be easy once loader has own thread and ImageFactory has callbacks
 def start():
     selector = Selector()
     loader = Loader(path=ask_file_name())
