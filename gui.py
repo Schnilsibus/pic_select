@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import filedialog
 from pathlib import Path
+from typing import Literal
 
 from .loader import LoaderWorker
 from .selector import Selector
@@ -44,6 +45,8 @@ class GuiControl(object):
         self._WIDTH: int = self._ROOT.winfo_width()
         self._HEIGHT: int = self._ROOT.winfo_height()
 
+        self._last_arrow: Literal["Left", "Right"] = None
+
         self._image_frame_factory = ImageFrameFactory(master=self._ROOT,
                                                       loader=self._loader,
                                                       selector=self._selector,
@@ -64,12 +67,12 @@ class GuiControl(object):
         self._separator_frame = tk.Frame(master=self._ROOT, background="white")
         self._separator_frame.place(relx=0.5, rely=0.5, anchor=tk.CENTER, relheight=1.0, relwidth=1.0)
 
-    # TODO: only ignore user input if it is going into the direction of unloaded images! but allow to go back to loaded images
     def _on_left_arrow_key(self, event) -> None:
         print("LEFT")
-        if self.is_waiting_on_loader():
+        if self.is_waiting_on_loader() and self._last_arrow == "Left":
             return None
 
+        self._last_arrow = "Left"
         path = self._loader.get_neighbor_path("Left", anchor=self._current_image_path)
         print(f"try update to {path.name}")
 
@@ -84,11 +87,13 @@ class GuiControl(object):
 
     def _on_right_arrow_key(self, event) -> None:
         print("RIGHT")
-        if self.is_waiting_on_loader():
+        if self.is_waiting_on_loader() and self._last_arrow == "Right":
             return None
         
+        self._last_arrow = "Right"
         path = self._loader.get_neighbor_path("Right", anchor=self._current_image_path)
-        
+        print(f"try update to {path.name}")
+
         if path is None:
             return None
         

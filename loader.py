@@ -137,7 +137,6 @@ class Loader(object):
     def get_images(self) -> Dict[Path, Image.Image]:
         return self._images
 
-# TODO: do not run each step in order; but do it in one step (if I want a picture 5 ahead do not load the others first)
 class LoaderWorker(object):
 
     def __init__(self, loader: Loader):
@@ -154,6 +153,8 @@ class LoaderWorker(object):
         requests = [first_request]
         while not self._queue.empty():
             requests.append(self._queue.get_nowait())
+
+        requests = self._condense_requests(requests=requests)
         
         for request in requests:
             if request == _FORWARD_REQUEST:
@@ -162,6 +163,38 @@ class LoaderWorker(object):
             elif request == _BACKWARD_REQUEST:
                 self._execute_backwards_step()
                 self._queue.task_done()
+
+    def _condense_requests(self, requests: List[str]) -> List[str]:
+        # TODO: jump to last requested path: last_path_index = max((i for i, request in enumerate(requsts) if request is Path), default=None)
+        forward_count = requests.count(_FORWARD_REQUEST)
+        backward_count = requests.count(_BACKWARD_REQUEST)
+        condensed_requests = []
+        requests_cancelled_out = 0
+        if forward_count == 0 or backward_count == 0:
+            print(f"could not condese requests {requests}")
+            return requests
+        if forward_count == backward_count:
+            for i in range(forward_count*2):
+                self._queue.task_done()
+                print(f"condensed {requests} to {[]}")
+            return []
+        elif forward_count < backward_count:
+            for request in requests:
+                if request == _BACKWARD_REQUEST and requests_cancelled_out < backward_count - forward_count:
+                    condensed_requests.append(request)
+                    requests_cancelled_out = requests_cancelled_out + 1
+                if requests_cancelled_out == backward_count - forward_count:
+                    print(f"condensed {requests} to {condensed_requests}")
+                    return condensed_requests
+        elif backward_count < forward_count:
+            for request in requests:
+                if request == _FORWARD_REQUEST and requests_cancelled_out < forward_count - backward_count:
+                    condensed_requests.append(request)
+                    requests_cancelled_out = requests_cancelled_out + 1
+                if requests_cancelled_out == forward_count - backward_count:
+                    print(f"condensed {requests} to {condensed_requests}")
+                    return condensed_requests
+        print(f"got here not good {requests}")
 
     def _execute_backwards_step(self) -> None:
         self._loader.backward()
