@@ -21,7 +21,7 @@ def ask_file_name() -> Path:
 
 class GuiControl(object):
     
-    def __init__(self, master: tk.Tk, loader_worker: LoaderWorker, selector: Selector):
+    def __init__(self, master: tk.Tk, loader_worker: LoaderWorker, selector: Selector, fullscreen = True):
         self._ROOT: tk.Tk = master
         self._loader_worker = loader_worker
         self._selector = selector
@@ -37,6 +37,8 @@ class GuiControl(object):
         self._ROOT.bind("<Control-a>", self._on_strg_a)
         self._ROOT.bind("<Control-A>", self._on_strg_a)
         self._ROOT.bind("<Escape>", self._on_escape)
+        self._ROOT.bind("<F11>", self._on_f_11)
+        
 
         self._ROOT.state("zoomed")
         self._ROOT.focus_force()
@@ -66,6 +68,10 @@ class GuiControl(object):
         self._load_frame.place(relx=0.5, rely=0.5, anchor=tk.CENTER, relheight=1.0, relwidth=1.0)
         self._separator_frame = tk.Frame(master=self._ROOT, background="white")
         self._separator_frame.place(relx=0.5, rely=0.5, anchor=tk.CENTER, relheight=1.0, relwidth=1.0)
+
+        self._is_fullscreen = fullscreen
+        if self._is_fullscreen:
+            self.enter_fullscreen()
 
     def _on_left_arrow_key(self, event) -> None:
         print("LEFT")
@@ -126,6 +132,21 @@ class GuiControl(object):
             self.update_current_image(path=path)
         
         self.refresh_display()
+
+    def _on_f_11(self, event) -> None:
+        self.toggle_fullscreen()
+
+    def toggle_fullscreen(self) -> None:
+        self._is_fullscreen = not self._is_fullscreen
+        self._ROOT.attributes("-fullscreen", self._is_fullscreen)
+    
+    def enter_fullscreen(self) -> None:
+        self._ROOT.attributes("-fullscreen", True)
+        self._is_fullscreen = True
+
+    def exit_fullscreen(self) -> None:
+        self._ROOT.attributes("-fullscreen", False)
+        self._is_fullscreen = False
 
     def refresh_display(self) -> None:
         self._separator_frame.tkraise()
