@@ -157,7 +157,8 @@ class LoaderWorker(object):
             request = self._queue.get()
             self._trigger_busy()
             self._execute_requests(first_request=request)
-            self._trigger_idle()
+            if self._queue.qsize() == 0:
+                self._trigger_idle()
 
     def _execute_requests(self, first_request: str) -> None:
         requests = [first_request]

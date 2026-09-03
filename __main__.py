@@ -11,21 +11,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-
-"""
-def resize_image(self, event):
-        # Extract new dimensions directly from the trigger event
-        new_width = event.width
-        new_height = event.height
-
-        # Resize the pristine original image to current dimensions
-        resized_img = self.original_image.resize((new_width, new_height), Image.Resampling.LANCZOS)
-        
-        # Convert into Tkinter-compatible PhotoImage format
-        self.tk_image = ImageTk.PhotoImage(resized_img)
-
-        # Update the existing canvas asset instead of drawing a new one
-        self.canvas.itemconfigure(self.canvas_image_id, image=self.tk_image)
-"""
