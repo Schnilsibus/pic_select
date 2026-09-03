@@ -1,7 +1,8 @@
 import tkinter as tk
 from tkinter import filedialog
 from pathlib import Path
-from typing import Literal
+from typing import Literal, Tuple
+import math
 
 from .loader import LoaderWorker
 from .selector import Selector
@@ -9,7 +10,9 @@ from .image_frame import ImageFrame, ImageFrameFactory, LoadFrame
 from .clipboard import copy_files_to_clipboard
 
 
-_PADDING = 100
+_PADDING_PERCENT = 0.15
+
+_MIN_WINDOW_DIM =  int(25 / _PADDING_PERCENT) + 1
 
 
 def ask_file_name() -> Path:
@@ -36,23 +39,35 @@ class GuiControl(object):
         self._ROOT.bind("<Control-C>", self._on_copy)
         self._ROOT.bind("<Control-a>", self._on_strg_a)
         self._ROOT.bind("<Control-A>", self._on_strg_a)
+        self._ROOT.bind("<Control-c>", self._on_exit)
+        self._ROOT.bind("<Control-C>", self._on_exit)
         self._ROOT.bind("<Escape>", self._on_escape)
         self._ROOT.bind("<F11>", self._on_f_11)
+        self._ROOT.bind("<Configure>", self._on_configure)
         
-
+        self._ROOT.minsize(_MIN_WINDOW_DIM, _MIN_WINDOW_DIM)
         self._ROOT.state("zoomed")
         self._ROOT.focus_force()
         self._ROOT.lift()
+
+        self._is_fullscreen = fullscreen
+        if self._is_fullscreen:
+            self.enter_fullscreen()
 
         self._WIDTH: int = self._ROOT.winfo_width()
         self._HEIGHT: int = self._ROOT.winfo_height()
 
         self._last_arrow: Literal["Left", "Right"] = None
 
+        self._loader_busy: bool = False
+
+        self._loader_worker.subscribe_on_idle(callback=self._on_loader_idle)
+        self._loader_worker.subscribe_on_busy(callback=self._on_loader_busy)
+
         self._image_frame_factory = ImageFrameFactory(master=self._ROOT,
                                                       loader=self._loader,
                                                       selector=self._selector,
-                                                      max_image_size=(self._WIDTH - _PADDING, self._HEIGHT - _PADDING))
+                                                      image_bounds=self._calculate_image_bounds())
         self._image_frame_factory.subscribe_on_frame_creation(callback=self._on_new_frame_created)
 
         self._current_image_path: Path = None
@@ -60,19 +75,26 @@ class GuiControl(object):
         self._current_image_name: tk.StringVar = tk.StringVar()
         self._current_image_label: tk.Label = tk.Label(master=self._ROOT,
                                                        textvariable=self._current_image_name,
-                                                       font=("Arial, 18"),
+                                                       font=("Arial, -20"),
                                                        background="white")
-        self._current_image_label.place(relx=0.5, rely=1.0, anchor=tk.S)
+        self._current_image_label.place(relx=0.5, rely=1.0, y=-5, anchor=tk.S)
 
         self._load_frame: LoadFrame = LoadFrame(master=self._ROOT)
         self._load_frame.place(relx=0.5, rely=0.5, anchor=tk.CENTER, relheight=1.0, relwidth=1.0)
         self._separator_frame = tk.Frame(master=self._ROOT, background="white")
         self._separator_frame.place(relx=0.5, rely=0.5, anchor=tk.CENTER, relheight=1.0, relwidth=1.0)
 
-        self._is_fullscreen = fullscreen
-        if self._is_fullscreen:
-            self.enter_fullscreen()
-
+        self._busy_indicator: tk.Label = tk.Label(master=self._ROOT,
+                                                  text="Loading ...",
+                                                  font=("Arial", -20),
+                                                  background="white")
+        self._busy_indicator.place(relx=0, rely=1, anchor="sw")
+    
+    def _calculate_image_bounds(self) -> Tuple[int, int]:
+        padding = min(self._WIDTH, self._HEIGHT) * _PADDING_PERCENT
+        padding = int(math.ceil(padding))
+        return (self._WIDTH - padding, self._HEIGHT - padding)
+    
     def _on_left_arrow_key(self, event) -> None:
         print("LEFT")
         if self.is_waiting_on_loader() and self._last_arrow == "Left":
@@ -136,6 +158,42 @@ class GuiControl(object):
     def _on_f_11(self, event) -> None:
         self.toggle_fullscreen()
 
+    # TODO: Problem: Way to slow! Ideas:
+    # - have separate thread for this (maybe do currently displayed one in root mainloop preloaded ones in thread)
+    # - only actually resize if differance is above some threshold lets say 10 pixels. Otherwise let the geometry manager handle it -> works because we have padding image will not be cut off
+    # - debounce the method (only every 50ms)
+    # - while resizing (use mouse event?) use less good resizing approximation
+    def _on_configure(self, event) -> None:
+        if event.widget != self._ROOT:
+            return None
+        
+        if event.width < _MIN_WINDOW_DIM:
+            event.width = _MIN_WINDOW_DIM
+        if event.height < _MIN_WINDOW_DIM:
+            event.height = _MIN_WINDOW_DIM
+
+        if event.width == self._WIDTH and event.height == self._HEIGHT:
+            return None
+        
+        self._WIDTH = event.width
+        self._HEIGHT = event.height
+        self.resize()
+
+    def _on_loader_busy(self) -> None:
+        self._loader_busy = True
+        self.refresh_display()
+
+    def _on_loader_idle(self) -> None:
+        self._loader_busy = False
+        self.refresh_display()
+
+    def _on_exit(self, event) -> None:
+        self._ROOT.destroy()
+    
+    def resize(self) -> None:
+        self._image_frame_factory.resize_frames(current=self._current_image_path,
+                                                image_bounds=self._calculate_image_bounds())
+
     def toggle_fullscreen(self) -> None:
         self._is_fullscreen = not self._is_fullscreen
         self._ROOT.attributes("-fullscreen", self._is_fullscreen)
@@ -156,6 +214,10 @@ class GuiControl(object):
         else:
             self._current_image_frame.tkraise()
             self._current_image_label.tkraise()
+
+        if self._loader_busy:
+            self._busy_indicator.tkraise()
+
         
     def update_current_image(self, path: Path) -> None:
         self._current_image_path = path

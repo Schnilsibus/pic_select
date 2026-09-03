@@ -59,16 +59,14 @@ class Loader(object):
         print(f"unloaded image {path.name}")
         self._trigger_unload(unloaded_path=path)
         return path
-    
-    def _trigger_load(self, image: Image.Image, path: Path) -> None:
-        for callback in self._load_callbacks:
-            callback(path, image)
 
-    def _trigger_unload(self, unloaded_path: Path) -> None:
-        for callback in self._unload_callbacks:
-            callback(unloaded_path)
+    def load_path(self, path: Path) -> None:
+        self._current_index = self._files.index(path)
+        for path in self._images.keys():
+            self._images.pop(path)
+        self._preload_images()
 
-    def preload_images(self) -> None:
+    def _preload_images(self) -> None:
         self._load_image()
         for i in range(1, self._preload_length + 1, 1):
             self._load_image(relative=i)
@@ -121,6 +119,14 @@ class Loader(object):
     
     def get_directory(self) -> Path:
         return self._directory
+
+    def _trigger_load(self, image: Image.Image, path: Path) -> None:
+        for callback in self._load_callbacks:
+            callback(path, image)
+    
+    def _trigger_unload(self, unloaded_path: Path) -> None:
+        for callback in self._unload_callbacks:
+            callback(unloaded_path)
     
     def subscribe_on_load(self, callback: Callable[[Path, Image.Image], None]):
         self._load_callbacks.add(callback)
@@ -143,11 +149,15 @@ class LoaderWorker(object):
         self._loader = loader
         
         self._queue = Queue()
+        self._idle_callbacks: Set[Callable[[], None]] = set()
+        self._busy_callbacks: Set[Callable[[], None]] = set()
 
     def _run(self) -> None:
         while True:
             request = self._queue.get()
+            self._trigger_busy()
             self._execute_requests(first_request=request)
+            self._trigger_idle()
 
     def _execute_requests(self, first_request: str) -> None:
         requests = [first_request]
@@ -157,6 +167,9 @@ class LoaderWorker(object):
         requests = self._condense_requests(requests=requests)
         
         for request in requests:
+            if isinstance(request, Path):
+                self._execute_initialize(path=request)
+                self._queue.task_done()
             if request == _FORWARD_REQUEST:
                 self._execute_forwards_step()
                 self._queue.task_done()
@@ -165,7 +178,7 @@ class LoaderWorker(object):
                 self._queue.task_done()
 
     def _condense_requests(self, requests: List[str]) -> List[str]:
-        # TODO: jump to last requested path: last_path_index = max((i for i, request in enumerate(requsts) if request is Path), default=None)
+        requests = self._cutoff_to_last_path(requests=requests)
         forward_count = requests.count(_FORWARD_REQUEST)
         backward_count = requests.count(_BACKWARD_REQUEST)
         condensed_requests = []
@@ -196,6 +209,20 @@ class LoaderWorker(object):
                     return condensed_requests
         print(f"got here not good {requests}")
 
+    def _cutoff_to_last_path(self, requests: List[str]) -> List[str]:
+        last_path_index = -1
+        for i in range(len(requests)):
+            if isinstance(requests[i], Path):
+                last_path_index = i
+        if last_path_index >= 0:
+            return requests[last_path_index:]
+        else:
+            return requests
+
+    def _execute_initialize(self, path: Path) -> None:
+        self._loader.load_path(path=path)
+        print(f"executed load path {path}")
+
     def _execute_backwards_step(self) -> None:
         self._loader.backward()
         print("executed backward")
@@ -203,6 +230,10 @@ class LoaderWorker(object):
     def _execute_forwards_step(self) -> None:
         self._loader.forward()
         print("executed forward")
+
+    def queue_load_path(self, path: Path) -> None:
+        self._queue.put(path)
+        print(f"requested load path {path}")
 
     def queue_forward(self) -> None:
         self._queue.put(_FORWARD_REQUEST)
@@ -217,3 +248,23 @@ class LoaderWorker(object):
 
     def get_loader(self) -> Loader:
         return self._loader
+
+    def subscribe_on_idle(self, callback: Callable[[], None]):
+        self._idle_callbacks.add(callback)
+
+    def unsubscribe_on_idle(self, callback: Callable[[], None]):
+        self._idle_callbacks.remove(callback)
+
+    def subscribe_on_busy(self, callback: Callable[[], None]):
+        self._busy_callbacks.add(callback)
+
+    def unsubscribe_on_busy(self, callback: Callable[[], None]):
+        self._busy_callbacks.remove(callback)
+
+    def _trigger_idle(self) -> None:
+        for callback in self._idle_callbacks:
+            callback()
+    
+    def _trigger_busy(self) -> None:
+        for callback in self._busy_callbacks:
+            callback()
