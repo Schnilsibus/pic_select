@@ -3,6 +3,8 @@ from tkinter import filedialog
 from pathlib import Path
 from typing import Literal, Tuple
 import math
+from time import time_ns
+from PIL import Image
 
 from .loader import LoaderWorker
 from .selector import Selector
@@ -13,6 +15,8 @@ from .clipboard import copy_files_to_clipboard
 _PADDING_PERCENT = 0.15
 
 _MIN_WINDOW_DIM =  int(25 / _PADDING_PERCENT) + 1
+
+_RESIZE_THRESHOLD = 5
 
 
 def ask_file_name() -> Path:
@@ -60,6 +64,9 @@ class GuiControl(object):
         self._last_arrow: Literal["Left", "Right"] = None
 
         self._loader_busy: bool = False
+
+        self._last_resize: int = -1
+        self._last_resample = None
 
         self._loader_worker.subscribe_on_idle(callback=self._on_loader_idle)
         self._loader_worker.subscribe_on_busy(callback=self._on_loader_busy)
@@ -160,24 +167,18 @@ class GuiControl(object):
 
     # TODO: Problem: Way to slow! Ideas:
     # - have separate thread for this (maybe do currently displayed one in root mainloop preloaded ones in thread)
-    # - only actually resize if differance is above some threshold lets say 10 pixels. Otherwise let the geometry manager handle it -> works because we have padding image will not be cut off
-    # - debounce the method (only every 50ms)
-    # - while resizing (use mouse event?) use less good resizing approximation
     def _on_configure(self, event) -> None:
         if event.widget != self._ROOT:
             return None
-        
-        if event.width < _MIN_WINDOW_DIM:
-            event.width = _MIN_WINDOW_DIM
-        if event.height < _MIN_WINDOW_DIM:
-            event.height = _MIN_WINDOW_DIM
 
-        if event.width == self._WIDTH and event.height == self._HEIGHT:
+        current_time = time_ns()
+
+        if current_time - self._last_resize < 5000000000:
             return None
+        else:
+            self._last_resize = current_time
         
-        self._WIDTH = event.width
-        self._HEIGHT = event.height
-        self.resize()
+        self.resize(new_size=(event.width, event.height))
 
     def _on_loader_busy(self) -> None:
         self._loader_busy = True
@@ -187,12 +188,37 @@ class GuiControl(object):
         self._loader_busy = False
         self.refresh_display()
 
+    def _on_mouse_release(self) -> None:
+        if not self._last_resample = Image.Resampling.LANCZOS
+            size = self._ROOT.winfo_width(), self._ROOT.winfo_height()
+            self.resize(new_size=size)
+
     def _on_exit(self, event) -> None:
         self._ROOT.destroy()
-    
-    def resize(self) -> None:
+
+    def resize(self, new_size: Tuple[int, int]) -> None:
+        if new_size[0] < _MIN_WINDOW_DIM:
+            new_size[0] = _MIN_WINDOW_DIM
+        if new_size[1] < _MIN_WINDOW_DIM:
+            new_size[1] = _MIN_WINDOW_DIM
+
+        if new_size[0] == self._WIDTH and new_size[1] == self._HEIGHT:
+            return None
+
+        if abs(self._WIDTH - new_size[0]) + abs(self._HEIGHT - new_size[1]) < _RESIZE_THRESHOLD:
+            return None
+        
+        self._WIDTH = new_size[0]
+        self._HEIGHT = new_size[1]
+
+        self._last_resample = Image.Resampling.dasCHEAPEST
+
+        if not MOUSEDOWN:
+            self._last_resample = Image.Resampling.LANCZOS
+
         self._image_frame_factory.resize_frames(current=self._current_image_path,
-                                                image_bounds=self._calculate_image_bounds())
+                                                image_bounds=self._calculate_image_bounds(),
+                                                resample=self._last_resample)
 
     def toggle_fullscreen(self) -> None:
         self._is_fullscreen = not self._is_fullscreen
