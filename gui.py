@@ -16,9 +16,6 @@ _PADDING_PERCENT = 0.15
 
 _MIN_WINDOW_DIM =  int(25 / _PADDING_PERCENT) + 1
 
-_RESIZE_THRESHOLD = 5
-
-
 def ask_file_name() -> Path:
     _root = tk.Tk()
     _root.withdraw()
@@ -189,7 +186,7 @@ class GuiControl(object):
         self.refresh_display()
 
     def _on_mouse_release(self) -> None:
-        if not self._last_resample = Image.Resampling.LANCZOS
+        if not self._last_resample == Image.Resampling.LANCZOS:
             size = self._ROOT.winfo_width(), self._ROOT.winfo_height()
             self.resize(new_size=size)
 
@@ -203,9 +200,6 @@ class GuiControl(object):
             new_size[1] = _MIN_WINDOW_DIM
 
         if new_size[0] == self._WIDTH and new_size[1] == self._HEIGHT:
-            return None
-
-        if abs(self._WIDTH - new_size[0]) + abs(self._HEIGHT - new_size[1]) < _RESIZE_THRESHOLD:
             return None
         
         self._WIDTH = new_size[0]
