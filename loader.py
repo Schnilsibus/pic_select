@@ -9,11 +9,12 @@ _BACKWARD_REQUEST = "backward"
 
 class Loader(object):
 
-    def __init__(self, path: Path, preload_length: int = 2):
+    def __init__(self, path: Path, preload_length: int = 6, batch_size: int = 3):
         if not path.is_file:
             raise ValueError(f"{path} is no file")
 
         self._preload_length = preload_length
+        self._batch_size = batch_size
         self._load_callbacks: Set[Callable[[Path, Image.Image], None]] = set()
         self._unload_callbacks: Set[Callable[[Path], None]] = set()
         self._images: Dict[Path, Image.Image] = dict()
@@ -45,7 +46,6 @@ class Loader(object):
                 image = ImageOps.exif_transpose(image=image)
         
         self._images[path] = image
-        print(f"loaded image {path.name}")
         self._trigger_load(image=image, path=path)
         return image
 
@@ -56,7 +56,6 @@ class Loader(object):
             return None
         
         self._images.pop(path)
-        print(f"unloaded image {path.name}")
         self._trigger_unload(unloaded_path=path)
         return path
 
@@ -185,12 +184,10 @@ class LoaderWorker(object):
         condensed_requests = []
         requests_cancelled_out = 0
         if forward_count == 0 or backward_count == 0:
-            print(f"could not condese requests {requests}")
             return requests
         if forward_count == backward_count:
             for i in range(forward_count*2):
                 self._queue.task_done()
-                print(f"condensed {requests} to {[]}")
             return []
         elif forward_count < backward_count:
             for request in requests:
@@ -198,7 +195,6 @@ class LoaderWorker(object):
                     condensed_requests.append(request)
                     requests_cancelled_out = requests_cancelled_out + 1
                 if requests_cancelled_out == backward_count - forward_count:
-                    print(f"condensed {requests} to {condensed_requests}")
                     return condensed_requests
         elif backward_count < forward_count:
             for request in requests:
@@ -206,9 +202,7 @@ class LoaderWorker(object):
                     condensed_requests.append(request)
                     requests_cancelled_out = requests_cancelled_out + 1
                 if requests_cancelled_out == forward_count - backward_count:
-                    print(f"condensed {requests} to {condensed_requests}")
                     return condensed_requests
-        print(f"got here not good {requests}")
 
     def _cutoff_to_last_path(self, requests: List[str]) -> List[str]:
         last_path_index = -1
@@ -222,27 +216,21 @@ class LoaderWorker(object):
 
     def _execute_initialize(self, path: Path) -> None:
         self._loader.load_path(path=path)
-        print(f"executed load path {path}")
 
     def _execute_backwards_step(self) -> None:
         self._loader.backward()
-        print("executed backward")
 
     def _execute_forwards_step(self) -> None:
         self._loader.forward()
-        print("executed forward")
 
     def queue_load_path(self, path: Path) -> None:
         self._queue.put(path)
-        print(f"requested load path {path}")
 
     def queue_forward(self) -> None:
         self._queue.put(_FORWARD_REQUEST)
-        print(f"requested forward")
 
     def queue_backward(self) -> None:
         self._queue.put(_BACKWARD_REQUEST)
-        print(f"requested backward")
 
     def mainloop(self) -> None:
         self._run()

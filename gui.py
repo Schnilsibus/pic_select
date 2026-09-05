@@ -44,7 +44,6 @@ class GuiControl(object):
         self._ROOT.bind("<Control-C>", self._on_exit)
         self._ROOT.bind("<Escape>", self._on_escape)
         self._ROOT.bind("<F11>", self._on_f_11)
-        self._ROOT.bind("<Configure>", self._on_configure)
         
         self._ROOT.minsize(_MIN_WINDOW_DIM, _MIN_WINDOW_DIM)
         self._ROOT.state("zoomed")
@@ -61,9 +60,6 @@ class GuiControl(object):
         self._last_arrow: Literal["Left", "Right"] = None
 
         self._loader_busy: bool = False
-
-        self._last_resize: int = -1
-        self._last_resample = None
 
         self._loader_worker.subscribe_on_idle(callback=self._on_loader_idle)
         self._loader_worker.subscribe_on_busy(callback=self._on_loader_busy)
@@ -100,13 +96,11 @@ class GuiControl(object):
         return (self._WIDTH - padding, self._HEIGHT - padding)
     
     def _on_left_arrow_key(self, event) -> None:
-        print("LEFT")
         if self.is_waiting_on_loader() and self._last_arrow == "Left":
             return None
 
         self._last_arrow = "Left"
         path = self._loader.get_neighbor_path("Left", anchor=self._current_image_path)
-        print(f"try update to {path.name}")
 
         if path is None:
             return None
@@ -118,13 +112,11 @@ class GuiControl(object):
 
 
     def _on_right_arrow_key(self, event) -> None:
-        print("RIGHT")
         if self.is_waiting_on_loader() and self._last_arrow == "Right":
             return None
         
         self._last_arrow = "Right"
         path = self._loader.get_neighbor_path("Right", anchor=self._current_image_path)
-        print(f"try update to {path.name}")
 
         if path is None:
             return None
@@ -162,21 +154,6 @@ class GuiControl(object):
     def _on_f_11(self, event) -> None:
         self.toggle_fullscreen()
 
-    # TODO: Problem: Way to slow! Ideas:
-    # - have separate thread for this (maybe do currently displayed one in root mainloop preloaded ones in thread)
-    def _on_configure(self, event) -> None:
-        if event.widget != self._ROOT:
-            return None
-
-        current_time = time_ns()
-
-        if current_time - self._last_resize < 5000000000:
-            return None
-        else:
-            self._last_resize = current_time
-        
-        self.resize(new_size=(event.width, event.height))
-
     def _on_loader_busy(self) -> None:
         self._loader_busy = True
         self.refresh_display()
@@ -185,34 +162,8 @@ class GuiControl(object):
         self._loader_busy = False
         self.refresh_display()
 
-    def _on_mouse_release(self) -> None:
-        if not self._last_resample == Image.Resampling.LANCZOS:
-            size = self._ROOT.winfo_width(), self._ROOT.winfo_height()
-            self.resize(new_size=size)
-
     def _on_exit(self, event) -> None:
         self._ROOT.destroy()
-
-    def resize(self, new_size: Tuple[int, int]) -> None:
-        if new_size[0] < _MIN_WINDOW_DIM:
-            new_size[0] = _MIN_WINDOW_DIM
-        if new_size[1] < _MIN_WINDOW_DIM:
-            new_size[1] = _MIN_WINDOW_DIM
-
-        if new_size[0] == self._WIDTH and new_size[1] == self._HEIGHT:
-            return None
-        
-        self._WIDTH = new_size[0]
-        self._HEIGHT = new_size[1]
-
-        self._last_resample = Image.Resampling.dasCHEAPEST
-
-        if not MOUSEDOWN:
-            self._last_resample = Image.Resampling.LANCZOS
-
-        self._image_frame_factory.resize_frames(current=self._current_image_path,
-                                                image_bounds=self._calculate_image_bounds(),
-                                                resample=self._last_resample)
 
     def toggle_fullscreen(self) -> None:
         self._is_fullscreen = not self._is_fullscreen
@@ -237,7 +188,6 @@ class GuiControl(object):
 
         if self._loader_busy:
             self._busy_indicator.tkraise()
-
         
     def update_current_image(self, path: Path) -> None:
         self._current_image_path = path
@@ -248,10 +198,7 @@ class GuiControl(object):
         except KeyError as ex:
             self._current_image_frame = None
             self._load_frame.set_text(name=path.name)
-            print(f"displaying load {path.name}")
             return None
-        
-        print(f"displaying image {path.name}")
 
     def is_waiting_on_loader(self) -> bool:
         return self._current_image_frame is None
