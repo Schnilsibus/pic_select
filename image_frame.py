@@ -71,13 +71,11 @@ class ImageFrame(tk.Frame):
         self._selected = True
         self._unselected_label.pack_forget()
         self._border_frame.pack()
-        self.winfo_toplevel().update() # TODO: did I not try and remove all update calls?
 
     def unselect(self) -> None:
         self._selected = False
         self._unselected_label.pack()
         self._border_frame.pack_forget()
-        self.winfo_toplevel().update() # TODO: did I not try and remove all update calls?
 
     def toggle_selected(self) -> None:
         if self._selected:
