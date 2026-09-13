@@ -4,7 +4,6 @@ from pathlib import Path
 from typing import Literal, Tuple
 import math
 from time import time_ns
-from PIL import Image
 
 from .loader import LoaderWorker
 from .selector import Selector

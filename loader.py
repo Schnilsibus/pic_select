@@ -2,6 +2,7 @@ from PIL import Image, ImageOps
 from pathlib import Path
 from typing import Dict, Callable, Set, Literal, List
 from queue import Queue
+import gc
 
 _EXIF_FORMATS = ["JPEG", "TIFF"]
 _FORWARD_REQUEST = "forward"
@@ -54,8 +55,10 @@ class Loader(object):
         
         if path not in self._images:
             return None
-        
+
+        self._images[path].close()
         self._images.pop(path)
+        gc.collect()
         self._trigger_unload(unloaded_path=path)
         return path
 
