@@ -8,6 +8,7 @@ _EXIF_FORMATS = ["JPEG", "TIFF"]
 _FORWARD_REQUEST = "forward"
 _BACKWARD_REQUEST = "backward"
 
+# TODO: remove logic from loader - should only have load and unload requests no remembering current image etc.
 class Loader(object):
 
     def __init__(self, path: Path, preload_length: int = 6, batch_size: int = 3):

@@ -13,7 +13,7 @@ _GAP_SIZE = 3
 _BORDER_SIZE = 3
 
 
-# TODO: Image seems to be slightly cut of when selected by the border
+# TODO: Image seems to be slightly cut of when selected by the border - redo!
 class ImageFrame(tk.Frame):
 
     def __init__(self, master, image: Image.Image, image_bounds: Tuple[int, int], selected: bool = False):
