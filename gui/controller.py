@@ -39,8 +39,8 @@ class GuiControl(object):
         self._ROOT.bind("<Control-C>", self._on_copy)
         self._ROOT.bind("<Control-a>", self._on_strg_a)
         self._ROOT.bind("<Control-A>", self._on_strg_a)
-        self._ROOT.bind("<Control-c>", self._on_exit)
-        self._ROOT.bind("<Control-C>", self._on_exit)
+        self._ROOT.bind("<Control-t>", self._on_exit)
+        self._ROOT.bind("<Control-T>", self._on_exit)
         self._ROOT.bind("<Escape>", self._on_escape)
         self._ROOT.bind("<F11>", self._on_f_11)
         

@@ -1,0 +1,134 @@
+from queue import Queue
+from typing import Callable, Set, List
+from pathlib import Path
+
+
+
+class LoaderController:
+    def __init__(self, preload_length: int = 6, batch_size: int = 3):
+        self._preload_length = preload_length
+        self._batch_size = batch_size
+
+        self._files = list()
+        self._current_index = -1
+
+        self._queue = Queue()
+
+    def 
+
+
+    class LoaderWorker(object):
+
+    def __init__(self, loader: Loader):
+        self._loader = loader
+        
+        self._queue = Queue()
+        self._idle_callbacks: Set[Callable[[], None]] = set()
+        self._busy_callbacks: Set[Callable[[], None]] = set()
+
+    def _run(self) -> None:
+        while True:
+            request = self._queue.get()
+            self._trigger_busy()
+            self._execute_requests(first_request=request)
+            if self._queue.qsize() == 0:
+                self._trigger_idle()
+
+    def _execute_requests(self, first_request: str) -> None:
+        requests = [first_request]
+        while not self._queue.empty():
+            requests.append(self._queue.get_nowait())
+
+        requests = self._condense_requests(requests=requests)
+        
+        for request in requests:
+            if isinstance(request, Path):
+                self._execute_initialize(path=request)
+                self._queue.task_done()
+            if request == _FORWARD_REQUEST:
+                self._execute_forwards_step()
+                self._queue.task_done()
+            elif request == _BACKWARD_REQUEST:
+                self._execute_backwards_step()
+                self._queue.task_done()
+
+    def _condense_requests(self, requests: List[str]) -> List[str]:
+        requests = self._cutoff_to_last_path(requests=requests)
+        forward_count = requests.count(_FORWARD_REQUEST)
+        backward_count = requests.count(_BACKWARD_REQUEST)
+        condensed_requests = []
+        requests_cancelled_out = 0
+        if forward_count == 0 or backward_count == 0:
+            return requests
+        if forward_count == backward_count:
+            for i in range(forward_count*2):
+                self._queue.task_done()
+            return []
+        elif forward_count < backward_count:
+            for request in requests:
+                if request == _BACKWARD_REQUEST and requests_cancelled_out < backward_count - forward_count:
+                    condensed_requests.append(request)
+                    requests_cancelled_out = requests_cancelled_out + 1
+                if requests_cancelled_out == backward_count - forward_count:
+                    return condensed_requests
+        elif backward_count < forward_count:
+            for request in requests:
+                if request == _FORWARD_REQUEST and requests_cancelled_out < forward_count - backward_count:
+                    condensed_requests.append(request)
+                    requests_cancelled_out = requests_cancelled_out + 1
+                if requests_cancelled_out == forward_count - backward_count:
+                    return condensed_requests
+
+    def _cutoff_to_last_path(self, requests: List[str]) -> List[str]:
+        last_path_index = -1
+        for i in range(len(requests)):
+            if isinstance(requests[i], Path):
+                last_path_index = i
+        if last_path_index >= 0:
+            return requests[last_path_index:]
+        else:
+            return requests
+
+    def _execute_initialize(self, path: Path) -> None:
+        self._loader.load_path(path=path)
+
+    def _execute_backwards_step(self) -> None:
+        self._loader.backward()
+
+    def _execute_forwards_step(self) -> None:
+        self._loader.forward()
+
+    def queue_load_path(self, path: Path) -> None:
+        self._queue.put(path)
+
+    def queue_forward(self) -> None:
+        self._queue.put(_FORWARD_REQUEST)
+
+    def queue_backward(self) -> None:
+        self._queue.put(_BACKWARD_REQUEST)
+
+    def mainloop(self) -> None:
+        self._run()
+
+    def get_loader(self) -> Loader:
+        return self._loader
+
+    def subscribe_on_idle(self, callback: Callable[[], None]):
+        self._idle_callbacks.add(callback)
+
+    def unsubscribe_on_idle(self, callback: Callable[[], None]):
+        self._idle_callbacks.remove(callback)
+
+    def subscribe_on_busy(self, callback: Callable[[], None]):
+        self._busy_callbacks.add(callback)
+
+    def unsubscribe_on_busy(self, callback: Callable[[], None]):
+        self._busy_callbacks.remove(callback)
+
+    def _trigger_idle(self) -> None:
+        for callback in self._idle_callbacks:
+            callback()
+    
+    def _trigger_busy(self) -> None:
+        for callback in self._busy_callbacks:
+            callback()
