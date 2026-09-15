@@ -1,0 +1,64 @@
+from typing import Literal
+
+from ..logic.clipboard import copy_files_to_clipboard
+from ..logic.loaderController import LoaderController
+from ..logic.selector import Selector
+from .UserInput import UserInput
+
+
+
+class UserInputHandler:
+
+    def __init__(self, selector: Selector, loaderController: LoaderController):
+
+        self._selector = selector
+        self._loaderController = loaderController
+
+        self._last_arrow_input: Literal[UserInput.FORWARD, UserInput.BACKWARD] = None
+        self._loader_busy: bool = False
+
+    def handle_input(self, input: UserInput):
+        if input not in UserInput:
+            raise RuntimeError("Invalid input")
+
+        match input:
+            case UserInput.FORWARD:
+                self._forward()
+            case UserInput.BACKWARD:
+                self._backward()
+            case UserInput.SELECT:
+                self._select()
+            case UserInput.COPY:
+                self._copy()
+            case UserInput.SELECT_ALL:
+                self._select_all()
+            case UserInput.UNSELECT_ALL:
+                self._unselect_all()
+
+    def _forward(self) -> None:
+        if self._loader_busy and self._last_arrow_input == UserInput.FORWARD:
+            return None
+
+        self._last_arrow_input = UserInput.FORWARD
+        self._loaderController.append_forward()
+
+    def _backward(self) -> None:
+        if self._loader_busy and self._last_arrow_input == UserInput.BACKWARD:
+            return None
+        
+        self._last_arrow_input = UserInput.BACKWARD
+        self._loaderController.append_backward()
+
+    def _select(self) -> None:
+        path = self._loaderController.current_file()
+        self._selector.toggle(path)
+
+    def _copy(self) -> None:
+        selection = self._selector.get_selection()
+        copy_files_to_clipboard(files=selection)
+
+    def _select_all(self) -> None:
+        self._selector.select_all()
+
+    def _unselect_all(self) -> None:
+        self._selector.unselect_all()

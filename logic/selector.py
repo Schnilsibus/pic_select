@@ -45,9 +45,12 @@ class Selector(Mapping):
         else:
             return False
         
-    def multi_select(self, path: List[Path]) -> None:
-        for path in path:
-            self._files[path] = True
+    def multi_select(self, paths: List[Path]) -> None:
+        for paths in paths:
+            self._files[paths] = True
+
+    def select_all(self) -> None:
+        self.multi_select(paths=self._files)
     
     def unselect_all(self) -> None:
         for path in self._files.keys():

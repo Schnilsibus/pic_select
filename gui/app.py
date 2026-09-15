@@ -3,24 +3,23 @@ from tkinter import filedialog
 from pathlib import Path
 from typing import Literal, Tuple
 import math
-from time import time_ns
 
 from .loader import LoaderWorker
 from .selector import Selector
-from .image_frame import ImageFrame, ImageFrameFactory, LoadFrame
+from .selectImageFrame import ImageFrame, ImageFrameFactory, LoadFrame
 from .clipboard import copy_files_to_clipboard
+
 
 
 _PADDING_PERCENT = 0.15
 
 _MIN_WINDOW_DIM =  int(25 / _PADDING_PERCENT) + 1
 
-def ask_file_name() -> Path:
-    _root = tk.Tk()
-    _root.withdraw()
-    path = filedialog.askopenfilename()
-    _root.destroy()
-    return Path(path)
+
+
+class App(tk.Tk):
+
+    def __init__(self, title: str, )
 
 class GuiControl(object):
     
@@ -32,8 +31,8 @@ class GuiControl(object):
         self._loader = self._loader_worker.get_loader()
         
         self._ROOT.title(str(self._loader.get_directory()))
-        self._ROOT.bind("<Left>", self._on_left_arrow_key)
-        self._ROOT.bind("<Right>", self._on_right_arrow_key)
+        self._ROOT.bind("<Left>", self._on_left_arrow)
+        self._ROOT.bind("<Right>", self._on_right_arrow)
         self._ROOT.bind("<space>", self._on_space)
         self._ROOT.bind("<Control-c>", self._on_copy)
         self._ROOT.bind("<Control-C>", self._on_copy)
@@ -94,7 +93,7 @@ class GuiControl(object):
         padding = int(math.ceil(padding))
         return (self._WIDTH - padding, self._HEIGHT - padding)
     
-    def _on_left_arrow_key(self, event) -> None:
+    def _on_left_arrow(self, event) -> None:
         if self.is_waiting_on_loader() and self._last_arrow == "Left":
             return None
 
@@ -110,7 +109,7 @@ class GuiControl(object):
         self._loader_worker.queue_backward()
 
 
-    def _on_right_arrow_key(self, event) -> None:
+    def _on_right_arrow(self, event) -> None:
         if self.is_waiting_on_loader() and self._last_arrow == "Right":
             return None
         
