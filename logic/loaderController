@@ -11,6 +11,11 @@ _BACKWARD_REQUEST = "backward"
 
 
 
+def distance(indexA, indexB) -> int:
+    return abs(indexA - indexB)
+
+
+
 class LoaderController:
     def __init__(self, loader: Loader, preload_length: int = 6, batch_size: int = 3):
         self._preload_length = preload_length
@@ -50,31 +55,26 @@ class LoaderController:
                 self._current_index = self._current_index - 1
             self._queue.task_done()
 
-        self._
-
-        self._updateLoader()
-
-    def _updateLoader(self) -> None:
-
-        def distance(indexA, indexB) -> int:
-            return abs(indexA - indexB)
-
         if self._current_index < 0:
             self._current_index = 0
         if self._current_index >= len(self._managed_files):
             self._current_index = len(self._managed_files) - 1
 
+        self._updateLoader()
+
+    def _updateLoader(self) -> None:
+
         if distance(self._current_index, self._centre_index) <= self._batch_size:
             return None
 
-        for index in range(self._current_index - self._preload_length, self._current_index + self._preload_length):
-            if not 
+        self._unload_out_of_scope_images()
+        self._load_in_scope_images()
 
     def _unload_out_of_scope_images(self) -> None:
         for path in self._loader.keys():
             index = self._loader.getIndexOf(path=path)
             if distance(self._current_index, index) > self._preload_length:
-                self._loader._unload_image()
+                self._loader.unload()
 
     def _load_in_scope_images(self) -> None:
 
@@ -84,12 +84,12 @@ class LoaderController:
             path = self._managed_files[index]
             if path in self._loader.keys():
                 return None
-            self._loader._load_image(path=path)
+            self._loader.load(path=path)
 
         load_index(self._current_index)
         for relative_position in range(1, self._preload_length):
-            load_index(self._current_index - relative_position)
             load_index(self._current_index + relative_position)
+            load_index(self._current_index - relative_position)
 
     def _trigger_idle(self) -> None:
         for callback in self._idle_callbacks:
@@ -101,6 +101,9 @@ class LoaderController:
 
     def mainloop(self) -> None:
             self._run()
+
+    def current_file(self) -> Path:
+        return self._managed_files[self._current_index]
 
     def append_reload(self, path: Path) -> None:
         self._queue.put(path)

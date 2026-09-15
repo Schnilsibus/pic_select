@@ -1,20 +1,16 @@
 from PIL import Image, ImageOps
 from pathlib import Path
-from typing import Dict, Callable, Set, Literal, List
-from queue import Queue
+from typing import Dict, Callable, Set, List
+from collections.abc import Mapping
 import gc
+
+
 
 _EXIF_FORMATS = ["JPEG", "TIFF"]
 
-loader has:
-a directory with getter
-private callbacks
-private list of files in the directory with a getter
-its images dict
 
 
-# TODO: remove logic from loader - should only have load and unload requests no remembering current image etc.
-class Loader(object):
+class Loader(Mapping):
 
     def __init__(self, directory: Path):
         if not directory.is_directory:
@@ -30,20 +26,38 @@ class Loader(object):
         self._load_callbacks: Set[Callable[[Path, Image.Image], None]] = set()
         self._unload_callbacks: Set[Callable[[Path], None]] = set()
 
-    def _get_path(self, relative: int = 0, anchor = None) -> Path:
-        anchor_index = self._current_index if anchor is None else self.get_all_paths().index(anchor)
+    def __getitem__(self, path: Path):
+        if path not in self._images:
+            raise KeyError(f"{path} is not loaded")
+        return self._images[path]
 
-        index = self._current_index + (anchor_index - self._current_index) + relative
+    def __setitem__(self, path: Path, image: Image.Image):
+        raise RuntimeError("use Loader.load()")
 
-        if index not in range(len(self._files)):
-            return None
-        return self._files[index]
+    def __delitem__(self, path: Path):
+        raise RuntimeError("use Loader.unload()")
+
+    def __contains__(self, path: Path):
+        return path in self._images
+
+    def __iter__(self):
+        return iter(self._images)
+
+    def __len__(self):
+        return len(self._images)
+
+    @property
+    def directory(self) -> Path:
+        return self._directory
+
+    @property
+    def files(self) -> List[Path]:
+        return self._files
     
-    def _load_image(self, relative: int = 0) -> Image.Image:
-        path = self._get_path(relative=relative)
-        if path is None:
-            return None
-        
+    def load(self, path: Path) -> Image.Image:
+        if path not in self._files:
+            raise KeyError(f"{path} not in {self._directory}")
+                
         image = Image.open(path)
 
         if image.format in _EXIF_FORMATS or image.format not in _EXIF_FORMATS:
@@ -56,9 +70,7 @@ class Loader(object):
         self._trigger_load(image=image, path=path)
         return image
 
-    def _unload_image(self, relative: int = 0) -> Path:
-        path = self._get_path(relative=relative)
-        
+    def unload(self, path) -> None:
         if path not in self._images:
             return None
 
@@ -66,67 +78,6 @@ class Loader(object):
         self._images.pop(path)
         gc.collect()
         self._trigger_unload(unloaded_path=path)
-        return path
-
-    def load_path(self, path: Path) -> None:
-        self._current_index = self._files.index(path)
-        for path in self._images.keys():
-            self._images.pop(path)
-        self._preload_images()
-
-    def _preload_images(self) -> None:
-        self._load_image()
-        for i in range(1, self._preload_length + 1, 1):
-            self._load_image(relative=i)
-            self._load_image(relative=-i)
-
-    def get_current_image(self) -> Image.Image:
-        return self._images[self.get_current_path()]
-    
-    def get_image(self, path: Path) -> Image.Image:
-        if path in self._images:
-            return self._images[path]
-        else:
-            raise KeyError(f"'{str(path)}' has not yet been loaded!")
-    
-    def get_current_path(self) -> Path:
-        return self._get_path()
-    
-    def get_neighbor_path(self, neighbor: Literal["Left", "Right"], anchor: Path = None) -> Path:
-        if neighbor == "Left":
-            return self._get_path(relative=-1, anchor=anchor)
-        if neighbor == "Right":
-            return self._get_path(relative=1, anchor=anchor)
-    
-    def get_all_paths(self) -> List[Path]:
-        return self._files
-    
-    def get_loaded_paths(self) -> List[Path]:
-        return list(self._images.keys())
-
-    def forward(self) -> None:
-        self._current_index = self._current_index + 1
-        if self._current_index not in range(0, len(self._files)):
-            self._current_index = self._current_index - 1
-            return None
-        
-        self._load_image(relative=self._preload_length)
-        self._unload_image(relative=-self._preload_length - 1)
-
-    def backward(self) -> None:
-        self._current_index = self._current_index - 1
-        if self._current_index not in range(0, len(self._files)):
-            self._current_index = self._current_index + 1
-            return None
-        
-        self._load_image(relative=-self._preload_length)
-        self._unload_image(relative=self._preload_length + 1)
-    
-    def get_preload_length(self) -> int:
-        return self._preload_length
-    
-    def get_directory(self) -> Path:
-        return self._directory
 
     def _trigger_load(self, image: Image.Image, path: Path) -> None:
         for callback in self._load_callbacks:
@@ -147,6 +98,3 @@ class Loader(object):
     
     def unsubscribe_on_unload(self, callback: Callable[[Path], None]):
         self._unload_callbacks.remove(callback)
-
-    def get_images(self) -> Dict[Path, Image.Image]:
-        return self._images
