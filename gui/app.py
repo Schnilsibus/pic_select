@@ -1,10 +1,11 @@
 import tkinter as tk
-from pathlib import Path
-from typing import Literal, Tuple
-import math
 
 from ..logic.input.UserInput import UserInput
 from ..logic.input.userInputHandler import UserInputHandler
+from ..logic.load.loaderController import LoaderController
+from ..logic.selector import Selector
+
+from .frames.displayFrame import DisplayFrame
 
 
 
@@ -16,7 +17,13 @@ _MIN_WINDOW_DIM =  int(25 / _PADDING_PERCENT) + 1
 
 class App(tk.Tk):
 
-    def __init__(self, title: str, inputHandler: UserInputHandler, fullscreen = True):
+    def __init__(
+            self,
+            title: str,
+            inputHandler: UserInputHandler,
+            loaderController: LoaderController,
+            selector: Selector,
+            fullscreen = True):
         super().__init__()
 
         self.title(title)
@@ -43,6 +50,9 @@ class App(tk.Tk):
             self.enter_fullscreen()
 
         self._inputHandler = inputHandler
+
+        self._displayFrame = DisplayFrame(master=self, loaderController=loaderController, selector=selector)
+        self._displayFrame.pack()
 
     def _on_right_arrow(self, event) -> None:
         self._inputHandler.handle_input(input=UserInput.FORWARD)

@@ -7,29 +7,28 @@ from ...logic.load.loaderController import LoaderController
 from ...logic.selector import Selector
 
 
-keeps a consitend padding from the edges of the frame (/window)
-can display different frames in its centre
-
-
 
 class DisplayFrame(ttk.Frame):
 
-    def __init__(self, master: tk.Tk, loaderController: LoaderController, selector: Selector):
-        super().__init__(master=master)
+    def __init__(self, master: tk.Widget, loaderController: LoaderController, selector: Selector):
+        width = master.winfo_width()
+        height = master.winfo_height()
+
+        super().__init__(master=master, width=width, height=height)
 
         loaderController.subscribe_on_busy(callback=self._on_loader_busy)
-        loaderController.subscribe_on_busy(callback=self._on_loader_idle)
+        loaderController.subscribe_on_idle(callback=self._on_loader_idle)
 
         selector.subscribe_on_select(callback=self._on_select)
 
-        self._selection_count: tk.StringVar = tk.StringVar(f"{0:04}")
+        self._selection_count: tk.StringVar = tk.StringVar(self, f"{0:04}")
         self._selection_count_label: tk.Label = tk.Label(master=self,
                                                         textvariable=self._selection_count,
-                                                        font=("Arial, -20"),
+                                                        font=("Arial", -20),
                                                         background="grey")
         self._selection_count_label.place(relx=0, rely=0, anchor="nw")
 
-        self._loader_busy: tk.StringVar = tk.StringVar("")
+        self._loader_busy: tk.StringVar = tk.StringVar(self, "")
         self._busy_indicator_label: tk.Label = tk.Label(master=self,
                                                         textvariable=self._loader_busy,
                                                         font=("Arial", -20),
@@ -47,9 +46,7 @@ class DisplayFrame(ttk.Frame):
 
 
 
-
-
-
+"""
 class GuiControl(object):
     
     def __init__(self, master: tk.Tk, loader_worker: LoaderWorker, selector: Selector, fullscreen = True):
@@ -135,3 +132,5 @@ class GuiControl(object):
 
     def is_waiting_on_loader(self) -> bool:
         return self._current_image_frame is None
+
+"""

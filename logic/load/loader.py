@@ -13,7 +13,7 @@ _EXIF_FORMATS = ["JPEG", "TIFF"]
 class Loader(Mapping):
 
     def __init__(self, directory: Path):
-        if not directory.is_directory:
+        if not directory.is_dir():
             raise ValueError(f"{directory} is no directory")
 
         self._directory: Path = directory

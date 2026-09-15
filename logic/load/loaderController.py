@@ -1,5 +1,5 @@
 from queue import Queue
-from typing import Callable, List
+from typing import Callable, Set
 from pathlib import Path
 
 from .loader import Loader
@@ -22,15 +22,15 @@ class LoaderController:
         self._batch_size = batch_size
 
         self._loader = loader
-        self._managed_files = self._loader.files()
+        self._managed_files = self._loader.files
 
         self._current_index = -1
         self._centre_index = -1
 
         self._queue = Queue()
 
-        self._idle_callbacks: List[Callable[[], None]] = []
-        self._busy_callbacks: List[Callable[[], None]] = []
+        self._idle_callbacks: Set[Callable[[], None]] = set()
+        self._busy_callbacks: Set[Callable[[], None]] = set()
 
     def _run(self) -> None:
         while True:
