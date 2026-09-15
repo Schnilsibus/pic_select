@@ -1,30 +1,31 @@
 from queue import Queue
-from typing import Callable, Set, List
+from typing import Callable, List
 from pathlib import Path
+
+from .loader import Loader
+
+
+
+_FORWARD_REQUEST = "forward"
+_BACKWARD_REQUEST = "backward"
 
 
 
 class LoaderController:
-    def __init__(self, preload_length: int = 6, batch_size: int = 3):
+    def __init__(self, loader: Loader, preload_length: int = 6, batch_size: int = 3):
         self._preload_length = preload_length
         self._batch_size = batch_size
 
-        self._files = list()
-        self._current_index = -1
-
-        self._queue = Queue()
-
-    def 
-
-
-    class LoaderWorker(object):
-
-    def __init__(self, loader: Loader):
         self._loader = loader
-        
+        self._managed_files = self._loader.files()
+
+        self._current_index = -1
+        self._centre_index = -1
+
         self._queue = Queue()
-        self._idle_callbacks: Set[Callable[[], None]] = set()
-        self._busy_callbacks: Set[Callable[[], None]] = set()
+
+        self._idle_callbacks: List[Callable[[], None]] = []
+        self._busy_callbacks: List[Callable[[], None]] = []
 
     def _run(self) -> None:
         while True:
@@ -34,84 +35,81 @@ class LoaderController:
             if self._queue.qsize() == 0:
                 self._trigger_idle()
 
-    def _execute_requests(self, first_request: str) -> None:
+    def _execute_queue(self, first_request) -> None:
         requests = [first_request]
+
         while not self._queue.empty():
             requests.append(self._queue.get_nowait())
 
-        requests = self._condense_requests(requests=requests)
-        
         for request in requests:
             if isinstance(request, Path):
-                self._execute_initialize(path=request)
-                self._queue.task_done()
-            if request == _FORWARD_REQUEST:
-                self._execute_forwards_step()
-                self._queue.task_done()
+                self._current_index = self._loader.getIndexOf(path=request)
+            elif request == _FORWARD_REQUEST:
+                self._current_index = self._current_index + 1
             elif request == _BACKWARD_REQUEST:
-                self._execute_backwards_step()
-                self._queue.task_done()
+                self._current_index = self._current_index - 1
+            self._queue.task_done()
 
-    def _condense_requests(self, requests: List[str]) -> List[str]:
-        requests = self._cutoff_to_last_path(requests=requests)
-        forward_count = requests.count(_FORWARD_REQUEST)
-        backward_count = requests.count(_BACKWARD_REQUEST)
-        condensed_requests = []
-        requests_cancelled_out = 0
-        if forward_count == 0 or backward_count == 0:
-            return requests
-        if forward_count == backward_count:
-            for i in range(forward_count*2):
-                self._queue.task_done()
-            return []
-        elif forward_count < backward_count:
-            for request in requests:
-                if request == _BACKWARD_REQUEST and requests_cancelled_out < backward_count - forward_count:
-                    condensed_requests.append(request)
-                    requests_cancelled_out = requests_cancelled_out + 1
-                if requests_cancelled_out == backward_count - forward_count:
-                    return condensed_requests
-        elif backward_count < forward_count:
-            for request in requests:
-                if request == _FORWARD_REQUEST and requests_cancelled_out < forward_count - backward_count:
-                    condensed_requests.append(request)
-                    requests_cancelled_out = requests_cancelled_out + 1
-                if requests_cancelled_out == forward_count - backward_count:
-                    return condensed_requests
+        self._
 
-    def _cutoff_to_last_path(self, requests: List[str]) -> List[str]:
-        last_path_index = -1
-        for i in range(len(requests)):
-            if isinstance(requests[i], Path):
-                last_path_index = i
-        if last_path_index >= 0:
-            return requests[last_path_index:]
-        else:
-            return requests
+        self._updateLoader()
 
-    def _execute_initialize(self, path: Path) -> None:
-        self._loader.load_path(path=path)
+    def _updateLoader(self) -> None:
 
-    def _execute_backwards_step(self) -> None:
-        self._loader.backward()
+        def distance(indexA, indexB) -> int:
+            return abs(indexA - indexB)
 
-    def _execute_forwards_step(self) -> None:
-        self._loader.forward()
+        if self._current_index < 0:
+            self._current_index = 0
+        if self._current_index >= len(self._managed_files):
+            self._current_index = len(self._managed_files) - 1
 
-    def queue_load_path(self, path: Path) -> None:
-        self._queue.put(path)
+        if distance(self._current_index, self._centre_index) <= self._batch_size:
+            return None
 
-    def queue_forward(self) -> None:
-        self._queue.put(_FORWARD_REQUEST)
+        for index in range(self._current_index - self._preload_length, self._current_index + self._preload_length):
+            if not 
 
-    def queue_backward(self) -> None:
-        self._queue.put(_BACKWARD_REQUEST)
+    def _unload_out_of_scope_images(self) -> None:
+        for path in self._loader.keys():
+            index = self._loader.getIndexOf(path=path)
+            if distance(self._current_index, index) > self._preload_length:
+                self._loader._unload_image()
+
+    def _load_in_scope_images(self) -> None:
+
+        def load_index(index: int) -> None:
+            if index < 0 or index >= len(self._managed_files):
+                return None
+            path = self._managed_files[index]
+            if path in self._loader.keys():
+                return None
+            self._loader._load_image(path=path)
+
+        load_index(self._current_index)
+        for relative_position in range(1, self._preload_length):
+            load_index(self._current_index - relative_position)
+            load_index(self._current_index + relative_position)
+
+    def _trigger_idle(self) -> None:
+        for callback in self._idle_callbacks:
+            callback()
+    
+    def _trigger_busy(self) -> None:
+        for callback in self._busy_callbacks:
+            callback()
 
     def mainloop(self) -> None:
-        self._run()
+            self._run()
 
-    def get_loader(self) -> Loader:
-        return self._loader
+    def append_reload(self, path: Path) -> None:
+        self._queue.put(path)
+
+    def append_forward(self) -> None:
+        self._queue.put(_FORWARD_REQUEST)
+
+    def append_backward(self) -> None:
+        self._queue.put(_BACKWARD_REQUEST)
 
     def subscribe_on_idle(self, callback: Callable[[], None]):
         self._idle_callbacks.add(callback)
@@ -124,11 +122,3 @@ class LoaderController:
 
     def unsubscribe_on_busy(self, callback: Callable[[], None]):
         self._busy_callbacks.remove(callback)
-
-    def _trigger_idle(self) -> None:
-        for callback in self._idle_callbacks:
-            callback()
-    
-    def _trigger_busy(self) -> None:
-        for callback in self._busy_callbacks:
-            callback()

@@ -5,25 +5,30 @@ from queue import Queue
 import gc
 
 _EXIF_FORMATS = ["JPEG", "TIFF"]
-_FORWARD_REQUEST = "forward"
-_BACKWARD_REQUEST = "backward"
+
+loader has:
+a directory with getter
+private callbacks
+private list of files in the directory with a getter
+its images dict
+
 
 # TODO: remove logic from loader - should only have load and unload requests no remembering current image etc.
 class Loader(object):
 
-    def __init__(self, path: Path, preload_length: int = 6, batch_size: int = 3):
-        if not path.is_file:
-            raise ValueError(f"{path} is no file")
+    def __init__(self, directory: Path):
+        if not directory.is_directory:
+            raise ValueError(f"{directory} is no directory")
 
-        self._preload_length = preload_length
-        self._batch_size = batch_size
-        self._load_callbacks: Set[Callable[[Path, Image.Image], None]] = set()
-        self._unload_callbacks: Set[Callable[[Path], None]] = set()
-        self._images: Dict[Path, Image.Image] = dict()
-        self._directory: Path = path.parent
+        self._directory: Path = directory
+
         self._files: List[Path] = [f for f in self._directory.iterdir() if f.is_file()]
         self._files.sort()
-        self._current_index: int = self._files.index(path)
+
+        self._images: Dict[Path, Image.Image] = dict()
+
+        self._load_callbacks: Set[Callable[[Path, Image.Image], None]] = set()
+        self._unload_callbacks: Set[Callable[[Path], None]] = set()
 
     def _get_path(self, relative: int = 0, anchor = None) -> Path:
         anchor_index = self._current_index if anchor is None else self.get_all_paths().index(anchor)
