@@ -1,10 +1,6 @@
 import tkinter as tk
 import threading
 
-from .loader import Loader, LoaderWorker
-from .selector import Selector
-from .gui import GuiControl, ask_file_name
-
 def start():
     path = ask_file_name()
     selector = Selector()

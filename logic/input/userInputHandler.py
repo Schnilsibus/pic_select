@@ -1,8 +1,8 @@
 from typing import Literal
 
-from ..logic.clipboard import copy_files_to_clipboard
-from ..logic.loaderController import LoaderController
-from ..logic.selector import Selector
+from ..clipboard import copy_files_to_clipboard
+from ..load.loaderController import LoaderController
+from ..selector import Selector
 from .UserInput import UserInput
 
 
