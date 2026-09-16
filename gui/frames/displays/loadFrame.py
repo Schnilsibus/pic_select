@@ -1,10 +1,13 @@
 import tkinter as tk
+from typing import Tuple
+
+
 
 
 class LoadFrame(tk.Frame):
 
-    def __init__(self, master: tk.Widget, width: int, height: int):
-        super().__init__(master=master, background="yellow", width=width, height=height)
+    def __init__(self, master: tk.Widget, display_size: Tuple[int, int]):
+        super().__init__(master=master, background="yellow", width=display_size[0], height=display_size[1])
 
         self.pack_propagate(False)
 

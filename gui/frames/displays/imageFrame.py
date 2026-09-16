@@ -1,17 +1,72 @@
 import tkinter as tk
 from PIL import Image, ImageTk
-from typing import Tuple, Dict, Callable, Set
-from pathlib import Path
+from typing import Tuple
 import math
 
-from .loader import Loader
-from .selector import Selector
+from ..components.borderedImageFrame import BorderedImageFrame
+from ..components.paddedImageFrame import PaddedImageFrame
 
 
 
-_GAP_SIZE = 3
-_BORDER_SIZE = 3
+_GAP_SIZE = 10
+_BORDER_SIZE = 10
 
+
+
+class ImageFrame(tk.Frame):
+
+    def __init__(self, master: tk.Widget, display_size: Tuple[int, int], image: Image.Image, selected: bool = False):
+        super().__init__(master=master, background="yellow", width=display_size[0], height=display_size[1])
+
+        self.pack_propagate(False)
+
+        image_bounds = display_size[0] - _GAP_SIZE - _BORDER_SIZE, display_size[1] - _GAP_SIZE - _BORDER_SIZE
+        image_size = ImageFrame.calculate_max_inbound_size(image_bounds=image_bounds, full_size=(image.width, image.height))
+
+        self._image = ImageTk.PhotoImage(image=image.resize(image_size, resample=Image.Resampling.LANCZOS))
+
+        self._selected_image_frame = BorderedImageFrame(master=self, image=self._image, padding=_GAP_SIZE, borderwidth=_BORDER_SIZE)
+        self._unselected_image_frame = PaddedImageFrame(master=self, image=self._image, padding=_GAP_SIZE + _BORDER_SIZE)
+
+        self._selected_image_frame.place(relx=0.5, rely=0.5, anchor="center")
+        self._unselected_image_frame.place(relx=0.5, rely=0.5, anchor="center")
+
+        self._selected = selected
+
+        if self._selected:
+            self.select()
+        else:
+            self.unselect()
+
+    @staticmethod
+    def calculate_max_inbound_size(image_bounds: Tuple[int, int], full_size: Tuple[int, int]) -> Tuple[int, int]:
+        width_factor = image_bounds[0] / full_size[0]
+        height_factor = image_bounds[1] / full_size[1]
+        factor = min(width_factor, height_factor)
+        return (int(math.floor(full_size[0] * factor)), int(math.floor(full_size[1] * factor)))
+
+    @property
+    def selected(self) -> bool:
+        return self._selected
+
+    def select(self) -> None:
+        self._selected = True
+        self._selected_image_frame.tkraise()
+
+    def unselect(self) -> None:
+        self._selected = False
+        self._unselected_image_frame.tkraise()
+
+    def toggle(self) -> None:
+        if self.selected:
+            self.unselect()
+        else:
+            self.select()
+
+
+
+
+"""
 
 # TODO: Image seems to be slightly cut of when selected by the border - redo!
 class ImageFrame(tk.Frame):
@@ -136,3 +191,4 @@ class ImageFrameFactory:
 
 
 
+"""
