@@ -1,11 +1,10 @@
 import tkinter as tk
-from tkinter import ttk
 
 
-class LoadFrame(ttk.Frame):
+class LoadFrame(tk.Frame):
 
     def __init__(self, master: tk.Widget, width: int, height: int):
-        super().__init__(master=master, bg="yellow", width=width, height=height)
+        super().__init__(master=master, background="yellow", width=width, height=height)
 
         self.pack_propagate(False)
 

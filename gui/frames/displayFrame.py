@@ -1,20 +1,20 @@
 import tkinter as tk
 from tkinter import ttk
-from typing import List
+from typing import List, Tuple
 from pathlib import Path
 
 from ...logic.load.loaderController import LoaderController
 from ...logic.selector import Selector
 
+from .displays.loadFrame import LoadFrame
+from .displays.selectImageFrame import SelectImageFrame
 
+_PADDING_PIXELS = 70
 
 class DisplayFrame(ttk.Frame):
 
     def __init__(self, master: tk.Widget, loaderController: LoaderController, selector: Selector):
-        width = master.winfo_width()
-        height = master.winfo_height()
-
-        super().__init__(master=master, width=width, height=height)
+        super().__init__(master=master)
 
         loaderController.subscribe_on_busy(callback=self._on_loader_busy)
         loaderController.subscribe_on_idle(callback=self._on_loader_idle)
@@ -35,6 +35,9 @@ class DisplayFrame(ttk.Frame):
                                                         background="grey")
         self._busy_indicator_label.place(relx=0, rely=1, anchor="sw")
 
+        self._load_frame: LoadFrame = None
+        self._select_image_frame: SelectImageFrame = None
+                
     def _on_loader_busy(self) -> None:
         self._loader_busy.set("Loading ...")
 
@@ -43,6 +46,29 @@ class DisplayFrame(ttk.Frame):
 
     def _on_select(self, selection: List[Path]) -> None:
         self._selection_count.set(f"{len(selection):04}")
+
+    def setup_displays(self) -> None:
+        self.master.update_idletasks()
+        
+        self._load_frame = LoadFrame(self, *self.display_size())
+        self._load_frame.place(relx=0.5, rely=0.5, anchor="center")
+
+        self._select_image_frame = SelectImageFrame(self, *self.display_size())
+        self._select_image_frame.place(relx=0.5, rely=0.5, anchor="center")
+
+    def display_size(self) -> Tuple[int, int]:
+        width, height = self.winfo_width(), self.winfo_height()
+        return width - _PADDING_PIXELS, height -_PADDING_PIXELS
+
+    def show_image(self, path: Path) -> None:
+        raise NotImplementedError()
+
+    def show_loading(self, path: Path) -> None:
+        self._load_frame.set_text(name=path.name)
+        self._load_frame.tkraise()
+
+    def show_select_image(self) -> None:
+        self._select_image_frame.tkraise()
 
 
 
