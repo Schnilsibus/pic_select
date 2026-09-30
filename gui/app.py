@@ -53,7 +53,7 @@ class App(tk.Tk):
 
         self._displayFrame = DisplayFrame(master=self, loaderController=loaderController, selector=selector)
         self._displayFrame.pack(fill="both", expand=True)
-        self._displayFrame.setup_displays()
+        self._displayFrame.setup_displays(selector=selector)
 
     def _on_right_arrow(self, event) -> None:
         self._inputHandler.handle_input(input=UserInput.FORWARD)

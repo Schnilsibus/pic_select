@@ -1,0 +1,112 @@
+import tkinter as tk
+from typing import Tuple, Dict, Self
+from pathlib import Path
+from collections.abc import Mapping
+from PIL import Image
+
+from ....logic.selector import Selector
+
+from ..components.imageFrame import ImageFrame
+from ..displays.loadFrame import LoadFrame
+
+
+
+class ImageViewFrame(tk.Frame, Mapping):
+
+    def __init__(self, master: tk.Widget, display_size: Tuple[int, int], selector: Selector):
+        super().__init__(master=master, width=display_size[0], height=display_size[1])
+
+        self._selector = selector
+
+        self._image_frames: Dict[Path, ImageFrame] = {}
+
+        self._current_image_path: Path = None
+
+        self._load_frame: LoadFrame = LoadFrame(master=self, display_size=display_size)
+        self._load_frame.place(relx=0.5, rely=0.5, anchor="center")
+
+    def __getitem__(self, path: Path):
+        if path not in self._images:
+            raise KeyError(f"{path} is not framed")
+        return self._image_frames[path]
+
+    def __setitem__(self, path: Path, image: Image.Image):
+        raise RuntimeError("use ImageViewFrame.create_image_frame()")
+
+    def __delitem__(self, path: Path):
+        raise RuntimeError("use ImageViewFrame.remove_image_frame()")
+
+    def __contains__(self, path: Path):
+        return path in self._image_frames
+
+    def __iter__(self):
+        return iter(self._image_frames)
+
+    def __len__(self):
+        return len(self._image_frames)
+
+    def create_image_frame(self, path: Path, image: Image.Image) -> Self:
+        self._image_frames[path] = ImageFrame(master=self,
+                                              display_size=(self.winfo_width(), self.winfo_height()),
+                                              image=image,
+                                              selected=self._selector.is_selected(path=path))
+        self._image_frames[path].place(relx=0.5, rely=0.5, anchor="center")
+        self.display_image_frame(path=self._current_image_path)
+
+    def remove_image_frame(self, path: Path) -> Self:
+            raise NotImplementedError()
+
+    def display_image_frame(self, path: Path) -> None:
+        if path not in self:
+            self._load_frame.set_text(name=path.name)
+            self._load_frame.tkraise()
+        else:
+            self._image_frames[path].tkraise()
+        self._current_image_path = path
+
+
+
+"""
+class ImageFrameFactory:
+
+    def __init__(self, master: tk.Widget, loader: Loader, selector: Selector, image_bounds: Tuple[int, int]):
+        self._frames: Dict[Path, ImageFrame] = {}
+        self._master = master
+        self._selector = selector
+        self._current_image_bounds = image_bounds
+        self._frame_creation_callbacks: Set[Callable[[Path], None]] = set()
+
+        loader.subscribe_on_load(callback = self._on_load)
+        loader.subscribe_on_unload(callback = self._on_unload)
+
+    def _on_load(self, path: Path, image: Image.Image) -> None:
+        self._create_image_frame(path=path, image=image)
+
+    def _on_unload(self, unloaded: Path) -> None:
+        if unloaded is not None:
+            self._frames.pop(unloaded)
+
+    def _trigger_frame_creation(self, path: Path):
+        for callback in self._frame_creation_callbacks:
+            callback(path)
+
+    def _create_image_frame(self, path: Path, image: Image.Image) -> None:
+        self._frames[path] = ImageFrame(master=self._master,
+                                        image=image,
+                                        image_bounds=self._current_image_bounds,
+                                        selected=self._selector.is_selected(path))
+        self._trigger_frame_creation(path=path)
+        
+    def select_all(self, unselect = False):
+        for frame in self._frames.values():
+            if unselect:
+                frame.unselect()
+            else:
+                frame.select()
+
+    def subscribe_on_frame_creation(self, callback: Callable[[Path], None]) -> None:
+        self._frame_creation_callbacks.add(callback)
+    
+    def unsubscribe_on_frame_creation(self, callback: Callable[[Path], None]) -> None:
+        self._frame_creation_callbacks.remove(callback)
+"""

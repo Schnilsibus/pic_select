@@ -6,8 +6,8 @@ from pathlib import Path
 from ...logic.load.loaderController import LoaderController
 from ...logic.selector import Selector
 
-from .displays.loadFrame import LoadFrame
 from .displays.selectImageFrame import SelectImageFrame
+from .displays.imageViewFrame import ImageViewFrame
 
 _PADDING_PIXELS = 70
 
@@ -35,8 +35,8 @@ class DisplayFrame(ttk.Frame):
                                                         background="grey")
         self._busy_indicator_label.place(relx=0, rely=1, anchor="sw")
 
-        self._load_frame: LoadFrame = None
         self._select_image_frame: SelectImageFrame = None
+        self._image_view_frame: ImageViewFrame = None
                 
     def _on_loader_busy(self) -> None:
         self._loader_busy.set("Loading ...")
@@ -47,13 +47,13 @@ class DisplayFrame(ttk.Frame):
     def _on_select(self, selection: List[Path]) -> None:
         self._selection_count.set(f"{len(selection):04}")
 
-    def setup_displays(self) -> None:
+    def setup_displays(self, selector: Selector) -> None:
         self.master.update_idletasks()
-        
-        self._load_frame = LoadFrame(self, *self.display_size())
-        self._load_frame.place(relx=0.5, rely=0.5, anchor="center")
 
-        self._select_image_frame = SelectImageFrame(self, *self.display_size())
+        self._image_view_frame = ImageViewFrame(master=self, display_size=self.display_size, selector=selector)
+        self._select_image_frame.place(relx=0.5, rely=0.5, anchor="center")
+
+        self._select_image_frame = SelectImageFrame(master=self, display_size=self.display_size())
         self._select_image_frame.place(relx=0.5, rely=0.5, anchor="center")
 
     def display_size(self) -> Tuple[int, int]:
@@ -123,14 +123,6 @@ class GuiControl(object):
         if self.is_waiting_on_loader() and self._current_image_path == path:
             self.update_current_image(path=path)
         
-        self.refresh_display()
-
-    def _on_loader_busy(self) -> None:
-        self._loader_busy = True
-        self.refresh_display()
-
-    def _on_loader_idle(self) -> None:
-        self._loader_busy = False
         self.refresh_display()
 
     def refresh_display(self) -> None:
