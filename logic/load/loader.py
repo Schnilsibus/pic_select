@@ -12,19 +12,23 @@ _EXIF_FORMATS = ["JPEG", "TIFF"]
 
 class Loader(Mapping):
 
-    def __init__(self, directory: Path):
-        if not directory.is_dir():
+    def __init__(self, directory: Path = None):
+        if directory is None:
+            self._directory = None
+        elif not directory.is_dir():
             raise ValueError(f"{directory} is no directory")
 
         self._directory: Path = directory
 
-        self._files: List[Path] = [f for f in self._directory.iterdir() if f.is_file()]
-        self._files.sort()
+        self._files: List[Path] = list()
 
         self._images: Dict[Path, Image.Image] = dict()
 
         self._load_callbacks: Set[Callable[[Path, Image.Image], None]] = set()
         self._unload_callbacks: Set[Callable[[Path], None]] = set()
+
+        if self._directory is not None:
+            self._lookup_files()
 
     def __getitem__(self, path: Path):
         if path not in self._images:
@@ -46,9 +50,21 @@ class Loader(Mapping):
     def __len__(self):
         return len(self._images)
 
+    def _lookup_files(self) -> None:
+        self._files = [f for f in self._directory.iterdir() if f.is_file()]
+        self._files.sort()
+
     @property
     def directory(self) -> Path:
         return self._directory
+
+    @directory.setter
+    def directory(self, directory: Path):
+        if not directory.is_dir():
+            raise ValueError(f"{directory} is no directory")
+        else:
+            self._directory = directory
+        self._lookup_files()
 
     @property
     def files(self) -> List[Path]:

@@ -4,12 +4,17 @@ from typing import List, Tuple
 from pathlib import Path
 
 from ...logic.load.loaderController import LoaderController
+from ...logic.load.loader import Loader
 from ...logic.selector import Selector
 
 from .displays.selectImageFrame import SelectImageFrame
 from .displays.imageViewFrame import ImageViewFrame
 
+
+
 _PADDING_PIXELS = 70
+
+
 
 class DisplayFrame(ttk.Frame):
 
@@ -47,11 +52,11 @@ class DisplayFrame(ttk.Frame):
     def _on_select(self, selection: List[Path]) -> None:
         self._selection_count.set(f"{len(selection):04}")
 
-    def setup_displays(self, selector: Selector) -> None:
+    def setup_displays(self, selector: Selector, loader: Loader) -> None:
         self.master.update_idletasks()
 
-        self._image_view_frame = ImageViewFrame(master=self, display_size=self.display_size, selector=selector)
-        self._select_image_frame.place(relx=0.5, rely=0.5, anchor="center")
+        self._image_view_frame = ImageViewFrame(master=self, display_size=self.display_size(), selector=selector, loader=loader)
+        self._image_view_frame.place(relx=0.5, rely=0.5, anchor="center")
 
         self._select_image_frame = SelectImageFrame(master=self, display_size=self.display_size())
         self._select_image_frame.place(relx=0.5, rely=0.5, anchor="center")
@@ -61,7 +66,7 @@ class DisplayFrame(ttk.Frame):
         return width - _PADDING_PIXELS, height -_PADDING_PIXELS
 
     def show_image(self, path: Path) -> None:
-        raise NotImplementedError()
+        self._image_view_frame.display_image_frame(path=path)
 
     def show_loading(self, path: Path) -> None:
         self._load_frame.set_text(name=path.name)

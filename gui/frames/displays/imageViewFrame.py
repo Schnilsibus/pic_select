@@ -5,6 +5,7 @@ from collections.abc import Mapping
 from PIL import Image
 
 from ....logic.selector import Selector
+from ....logic.load.loader import Loader
 
 from ..components.imageFrame import ImageFrame
 from ..displays.loadFrame import LoadFrame
@@ -13,7 +14,7 @@ from ..displays.loadFrame import LoadFrame
 
 class ImageViewFrame(tk.Frame, Mapping):
 
-    def __init__(self, master: tk.Widget, display_size: Tuple[int, int], selector: Selector):
+    def __init__(self, master: tk.Widget, display_size: Tuple[int, int], selector: Selector, loader: Loader):
         super().__init__(master=master, width=display_size[0], height=display_size[1])
 
         self._selector = selector
@@ -24,6 +25,9 @@ class ImageViewFrame(tk.Frame, Mapping):
 
         self._load_frame: LoadFrame = LoadFrame(master=self, display_size=display_size)
         self._load_frame.place(relx=0.5, rely=0.5, anchor="center")
+
+        loader.subscribe_on_load(callback=self._on_load)
+        loader.subscribe_on_unload(callback=self._on_unload)
 
     def __getitem__(self, path: Path):
         if path not in self._images:
@@ -44,6 +48,13 @@ class ImageViewFrame(tk.Frame, Mapping):
 
     def __len__(self):
         return len(self._image_frames)
+
+    def _on_load(self, path: Path, image: Image.Image) -> None:
+            self._create_image_frame(path=path, image=image)
+    
+    def _on_unload(self, unloaded: Path) -> None:
+        if unloaded is not None:
+            self._frames.pop(unloaded)
 
     def create_image_frame(self, path: Path, image: Image.Image) -> Self:
         self._image_frames[path] = ImageFrame(master=self,

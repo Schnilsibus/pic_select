@@ -1,7 +1,9 @@
 import tkinter as tk
+from pathlib import Path
 
 from ..logic.input.UserInput import UserInput
 from ..logic.input.userInputHandler import UserInputHandler
+from ..logic.load.loader import Loader
 from ..logic.load.loaderController import LoaderController
 from ..logic.selector import Selector
 
@@ -21,6 +23,7 @@ class App(tk.Tk):
             self,
             title: str,
             inputHandler: UserInputHandler,
+            loader: Loader,
             loaderController: LoaderController,
             selector: Selector,
             fullscreen = True):
@@ -53,7 +56,8 @@ class App(tk.Tk):
 
         self._displayFrame = DisplayFrame(master=self, loaderController=loaderController, selector=selector)
         self._displayFrame.pack(fill="both", expand=True)
-        self._displayFrame.setup_displays(selector=selector)
+        self._displayFrame.setup_displays(selector=selector, loader=loader)
+        self._displayFrame.show_select_image()
 
     def _on_right_arrow(self, event) -> None:
         self._inputHandler.handle_input(input=UserInput.FORWARD)
@@ -78,6 +82,10 @@ class App(tk.Tk):
 
     def _on_f_11(self, event) -> None:
         self.toggle_fullscreen()
+
+    def mainloop(self, path: Path, n = 0):
+        self._displayFrame.show_image(path=path)
+        return super().mainloop(n)
 
     def toggle_fullscreen(self) -> None:
         self._is_fullscreen = not self._is_fullscreen

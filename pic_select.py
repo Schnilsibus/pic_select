@@ -1,16 +1,36 @@
-import tkinter as tk
 import threading
 
+from .logic.load.loader import Loader
+from .logic.load.loaderController import LoaderController
+from .logic.selector import Selector
+from .logic.input.userInputHandler import UserInputHandler
+
+from .gui.app import App
+from .gui.selectFile import ask_file_name
+
+
+
 def start():
-    path = ask_file_name()
+    loader = Loader()
+    loaderController = LoaderController(loader=loader)
     selector = Selector()
-    loader = Loader(path=path)
-    worker = LoaderWorker(loader=loader)
-    worker_thread = threading.Thread(target=worker.mainloop, daemon=True)
-    root = tk.Tk()
-    gui = GuiControl(master=root, loader_worker=worker, selector=selector)
-    gui.update_current_image(path=path)
-    gui.refresh_display()
+    inputHandler = UserInputHandler(selector=selector, loaderController=loaderController)
+
+    worker_thread = threading.Thread(target=loaderController.mainloop, daemon=True)
+
+    app = App(title="",
+              inputHandler=inputHandler,
+              loader=loader,
+              loaderController=loaderController,
+              selector=selector,
+              fullscreen=True)
+
     worker_thread.start()
-    root.after(ms=5, func=worker.queue_load_path(path=path))
-    root.mainloop()
+
+    selected_file = ask_file_name(parent=app)
+
+    loader.directory = selected_file.parent
+
+    loaderController.append_reload(path=selected_file)
+
+    app.mainloop(path=selected_file)

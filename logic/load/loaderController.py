@@ -1,6 +1,7 @@
 from queue import Queue
 from typing import Callable, Set
 from pathlib import Path
+from PIL import Image
 
 from .loader import Loader
 
@@ -15,7 +16,7 @@ def distance(indexA, indexB) -> int:
     return abs(indexA - indexB)
 
 
-
+TODO remove the mamaged files property do everything through the loader!!
 class LoaderController:
     def __init__(self, loader: Loader, preload_length: int = 6, batch_size: int = 3):
         self._preload_length = preload_length
@@ -36,7 +37,7 @@ class LoaderController:
         while True:
             request = self._queue.get()
             self._trigger_busy()
-            self._execute_requests(first_request=request)
+            self._execute_queue(first_request=request)
             if self._queue.qsize() == 0:
                 self._trigger_idle()
 
@@ -48,7 +49,7 @@ class LoaderController:
 
         for request in requests:
             if isinstance(request, Path):
-                self._current_index = self._loader.getIndexOf(path=request)
+                self._current_index = self._managed_files.index(request)
             elif request == _FORWARD_REQUEST:
                 self._current_index = self._current_index + 1
             elif request == _BACKWARD_REQUEST:
