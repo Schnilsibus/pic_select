@@ -23,7 +23,7 @@ def start():
               loader=loader,
               loaderController=loaderController,
               selector=selector,
-              fullscreen=True)
+              fullscreen=False)
 
     worker_thread.start()
 
@@ -31,6 +31,7 @@ def start():
 
     loader.directory = selected_file.parent
 
-    loaderController.append_reload(path=selected_file)
+    app.after(1,
+              loaderController.append_reload(path=selected_file))
 
     app.mainloop(path=selected_file)

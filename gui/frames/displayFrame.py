@@ -9,7 +9,7 @@ from ...logic.selector import Selector
 
 from .displays.selectImageFrame import SelectImageFrame
 from .displays.imageViewFrame import ImageViewFrame
-
+from .displays.loadFrame import LoadFrame
 
 
 _PADDING_PIXELS = 70
@@ -23,6 +23,8 @@ class DisplayFrame(ttk.Frame):
 
         loaderController.subscribe_on_busy(callback=self._on_loader_busy)
         loaderController.subscribe_on_idle(callback=self._on_loader_idle)
+
+        loaderController.subscribe_on_index(callback=self._on_new_image)
 
         selector.subscribe_on_select(callback=self._on_select)
 
@@ -42,12 +44,16 @@ class DisplayFrame(ttk.Frame):
 
         self._select_image_frame: SelectImageFrame = None
         self._image_view_frame: ImageViewFrame = None
+        self._load_frame: LoadFrame = None
                 
     def _on_loader_busy(self) -> None:
         self._loader_busy.set("Loading ...")
 
     def _on_loader_idle(self) -> None:
         self._loader_busy.set("")
+
+    def _on_new_image(self, path: Path) -> None:
+        self.show_image(path=path)
 
     def _on_select(self, selection: List[Path]) -> None:
         self._selection_count.set(f"{len(selection):04}")
@@ -57,7 +63,7 @@ class DisplayFrame(ttk.Frame):
 
         self._image_view_frame = ImageViewFrame(master=self, display_size=self.display_size(), selector=selector, loader=loader)
         self._image_view_frame.place(relx=0.5, rely=0.5, anchor="center")
-
+        
         self._select_image_frame = SelectImageFrame(master=self, display_size=self.display_size())
         self._select_image_frame.place(relx=0.5, rely=0.5, anchor="center")
 
@@ -67,13 +73,16 @@ class DisplayFrame(ttk.Frame):
 
     def show_image(self, path: Path) -> None:
         self._image_view_frame.display_image_frame(path=path)
-
-    def show_loading(self, path: Path) -> None:
-        self._load_frame.set_text(name=path.name)
-        self._load_frame.tkraise()
+        self._image_view_frame.tkraise()
 
     def show_select_image(self) -> None:
         self._select_image_frame.tkraise()
+
+    def show_forward(self) -> None:
+        raise NotImplementedError()
+
+    def show_backward(self) -> None:
+        raise NotImplementedError()
 
 
 

@@ -1,5 +1,5 @@
 import tkinter as tk
-from typing import Tuple, Dict, Self
+from typing import Tuple, Dict, Self, Set, Callable
 from pathlib import Path
 from collections.abc import Mapping
 from PIL import Image
@@ -51,12 +51,14 @@ class ImageViewFrame(tk.Frame, Mapping):
 
     def _on_load(self, path: Path, image: Image.Image) -> None:
             self._create_image_frame(path=path, image=image)
+            if self._current_image_path == path:
+                self.display_image_frame(path=path)
     
     def _on_unload(self, unloaded: Path) -> None:
         if unloaded is not None:
-            self._frames.pop(unloaded)
+            self.remove_image_frame(path=unloaded)
 
-    def create_image_frame(self, path: Path, image: Image.Image) -> Self:
+    def _create_image_frame(self, path: Path, image: Image.Image) -> Self:
         self._image_frames[path] = ImageFrame(master=self,
                                               display_size=(self.winfo_width(), self.winfo_height()),
                                               image=image,
@@ -65,7 +67,7 @@ class ImageViewFrame(tk.Frame, Mapping):
         self.display_image_frame(path=self._current_image_path)
 
     def remove_image_frame(self, path: Path) -> Self:
-            raise NotImplementedError()
+        self._image_frames.pop(path)
 
     def display_image_frame(self, path: Path) -> None:
         if path not in self:
@@ -75,49 +77,9 @@ class ImageViewFrame(tk.Frame, Mapping):
             self._image_frames[path].tkraise()
         self._current_image_path = path
 
-
-
-"""
-class ImageFrameFactory:
-
-    def __init__(self, master: tk.Widget, loader: Loader, selector: Selector, image_bounds: Tuple[int, int]):
-        self._frames: Dict[Path, ImageFrame] = {}
-        self._master = master
-        self._selector = selector
-        self._current_image_bounds = image_bounds
-        self._frame_creation_callbacks: Set[Callable[[Path], None]] = set()
-
-        loader.subscribe_on_load(callback = self._on_load)
-        loader.subscribe_on_unload(callback = self._on_unload)
-
-    def _on_load(self, path: Path, image: Image.Image) -> None:
-        self._create_image_frame(path=path, image=image)
-
-    def _on_unload(self, unloaded: Path) -> None:
-        if unloaded is not None:
-            self._frames.pop(unloaded)
-
-    def _trigger_frame_creation(self, path: Path):
-        for callback in self._frame_creation_callbacks:
-            callback(path)
-
-    def _create_image_frame(self, path: Path, image: Image.Image) -> None:
-        self._frames[path] = ImageFrame(master=self._master,
-                                        image=image,
-                                        image_bounds=self._current_image_bounds,
-                                        selected=self._selector.is_selected(path))
-        self._trigger_frame_creation(path=path)
-        
     def select_all(self, unselect = False):
-        for frame in self._frames.values():
+        for frame in self._image_frames.values():
             if unselect:
                 frame.unselect()
             else:
                 frame.select()
-
-    def subscribe_on_frame_creation(self, callback: Callable[[Path], None]) -> None:
-        self._frame_creation_callbacks.add(callback)
-    
-    def unsubscribe_on_frame_creation(self, callback: Callable[[Path], None]) -> None:
-        self._frame_creation_callbacks.remove(callback)
-"""

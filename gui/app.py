@@ -16,7 +16,7 @@ _PADDING_PERCENT = 0.15
 _MIN_WINDOW_DIM =  int(25 / _PADDING_PERCENT) + 1
 
 
-
+# TODO: Problem: clicking to next image too slow because first backend update (loaderController) then front end --> Change!! 
 class App(tk.Tk):
 
     def __init__(
@@ -66,16 +66,16 @@ class App(tk.Tk):
         self._inputHandler.handle_input(input=UserInput.BACKWARD)
 
     def _on_space(self, event) -> None:
-        self._inputHandler.handle_input(input=UserInput.BACKWARD)
+        self._inputHandler.handle_input(input=UserInput.SELECT)
 
     def _on_strg_c(self, evetn) -> None:
-        self._inputHandler.handle_input(input=UserInput.BACKWARD)
+        self._inputHandler.handle_input(input=UserInput.COPY)
 
     def _on_strg_a(self, event) -> None:
-        self._inputHandler.handle_input(input=UserInput.BACKWARD)
+        self._inputHandler.handle_input(input=UserInput.SELECT_ALL)
     
     def _on_escape(self, event) -> None:
-        self._inputHandler.handle_input(input=UserInput.BACKWARD)
+        self._inputHandler.handle_input(input=UserInput.UNSELECT_ALL)
 
     def _on_strg_t(self, event) -> None:
         self.quit()

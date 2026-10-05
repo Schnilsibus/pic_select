@@ -16,22 +16,23 @@ def distance(indexA, indexB) -> int:
     return abs(indexA - indexB)
 
 
-TODO remove the mamaged files property do everything through the loader!!
+
 class LoaderController:
     def __init__(self, loader: Loader, preload_length: int = 6, batch_size: int = 3):
         self._preload_length = preload_length
         self._batch_size = batch_size
 
         self._loader = loader
-        self._managed_files = self._loader.files
 
         self._current_index = -1
-        self._centre_index = -1
+        self._centre_index = -batch_size - 1
 
         self._queue = Queue()
 
         self._idle_callbacks: Set[Callable[[], None]] = set()
         self._busy_callbacks: Set[Callable[[], None]] = set()
+
+        self._index_callbacks: Set[Callable[[Path], None]] = set()
 
     def _run(self) -> None:
         while True:
@@ -49,7 +50,7 @@ class LoaderController:
 
         for request in requests:
             if isinstance(request, Path):
-                self._current_index = self._managed_files.index(request)
+                self._current_index = self._loader.files.index(request)
             elif request == _FORWARD_REQUEST:
                 self._current_index = self._current_index + 1
             elif request == _BACKWARD_REQUEST:
@@ -58,8 +59,10 @@ class LoaderController:
 
         if self._current_index < 0:
             self._current_index = 0
-        if self._current_index >= len(self._managed_files):
-            self._current_index = len(self._managed_files) - 1
+        if self._current_index >= len(self._loader.files):
+            self._current_index = len(self._loader.files) - 1
+
+        self._trigger_index()
 
         self._updateLoader()
 
@@ -72,17 +75,20 @@ class LoaderController:
         self._load_in_scope_images()
 
     def _unload_out_of_scope_images(self) -> None:
+        out_of_scope_images = []
         for path in self._loader.keys():
-            index = self._loader.getIndexOf(path=path)
-            if distance(self._current_index, index) > self._preload_length:
-                self._loader.unload()
+            index = self._loader.files.index(path)
+            if distance(self._centre_index, index) > self._preload_length:
+                out_of_scope_images.append(path)
+        for path in out_of_scope_images:
+            self._loader.unload(path=path)
 
     def _load_in_scope_images(self) -> None:
 
         def load_index(index: int) -> None:
-            if index < 0 or index >= len(self._managed_files):
+            if index < 0 or index >= len(self._loader.files):
                 return None
-            path = self._managed_files[index]
+            path = self._loader.files[index]
             if path in self._loader.keys():
                 return None
             self._loader.load(path=path)
@@ -100,11 +106,16 @@ class LoaderController:
         for callback in self._busy_callbacks:
             callback()
 
+    def _trigger_index(self) -> None:
+        path = self._loader.files[self._current_index]
+        for callback in self._index_callbacks:
+            callback(path)
+
     def mainloop(self) -> None:
             self._run()
 
     def current_file(self) -> Path:
-        return self._managed_files[self._current_index]
+        return self._loader.files[self._current_index]
 
     def append_reload(self, path: Path) -> None:
         self._queue.put(path)
@@ -126,3 +137,9 @@ class LoaderController:
 
     def unsubscribe_on_busy(self, callback: Callable[[], None]):
         self._busy_callbacks.remove(callback)
+
+    def subscribe_on_index(self, callback: Callable[[Path], None]):
+        self._index_callbacks.add(callback)
+    
+    def unsubscribe_on_index(self, callback: Callable[[Path], None]):
+        self._index_callbacks.remove(callback)
