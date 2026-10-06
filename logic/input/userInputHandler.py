@@ -6,7 +6,7 @@ from ..selector import Selector
 from .UserInput import UserInput
 
 
-
+# TODO: change too many clicks protection!! -> only ignore input when at the edge of the loaded images
 class UserInputHandler:
 
     def __init__(self, selector: Selector, loaderController: LoaderController):

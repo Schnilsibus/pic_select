@@ -5,7 +5,7 @@ from .test import test_code
 
 
 def main():
-    start()
+    test_code()
 
 if __name__ == "__main__":
     main()

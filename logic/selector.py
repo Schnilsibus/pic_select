@@ -9,7 +9,7 @@ class Selector(Mapping):
     def __init__(self):
         self._files: Dict[Path, bool] = {}
 
-        self._callbacks: Set[Callable[[List[Path]], None]] = set()
+        self._callbacks: Set[Callable[[Path, bool], None]] = set()
 
     def __getitem__(self, path: Path):
         if path not in self._files:
@@ -31,18 +31,17 @@ class Selector(Mapping):
     def __len__(self):
         return len(self._files)
 
-    def _trigger_select(self) -> None:
-        selection = self.get_selection()
+    def _trigger_select(self, path: Path) -> None:
         for callback in self._callbacks:
-            callback(selection)
+            callback(path, self.is_selected(path=path))
 
     def toggle(self, path: Path) -> bool:
         if path in self._files:
             self._files[path] = not self._files[path]
         else:
             self._files[path] = True
-        self._trigger_select()
-        return self._files[path]
+        self._trigger_select(path=path)
+        return self.is_selected(path=path)
 
     def get_selection(self) -> List[Path]:
         return list({k: v for k, v in self._files.items() if v is True}.keys())
@@ -54,21 +53,20 @@ class Selector(Mapping):
             return False
         
     def multi_select(self, paths: List[Path]) -> None:
-        for paths in paths:
-            self._files[paths] = True
-        self._trigger_select()
+        for path in paths:
+            self._files[path] = True
+            self._trigger_select(path=path)
 
     def select_all(self) -> None:
         self.multi_select(paths=self._files)
-        self._trigger_select()
     
     def unselect_all(self) -> None:
         for path in self._files.keys():
             self._files[path] = False
-        self._trigger_select()
+            self._trigger_select(path=path)
 
-    def subscribe_on_select(self, callback: Callable[[List[Path]], None]):
+    def subscribe_on_select(self, callback: Callable[[Path, bool], None]):
         self._callbacks.add(callback)
 
-    def unsubscribe_on_select(self, callback: Callable[[List[Path]], None]):
+    def unsubscribe_on_select(self, callback: Callable[[Path, bool], None]):
         self._callbacks.remove(callback)

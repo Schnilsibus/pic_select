@@ -11,12 +11,17 @@ from ..components.imageFrame import ImageFrame
 from ..displays.loadFrame import LoadFrame
 
 
-
+# TODO: Problem: selecting moves the image slightly -> Only in full size app not in isolated test!
 class ImageViewFrame(tk.Frame, Mapping):
 
     def __init__(self, master: tk.Widget, display_size: Tuple[int, int], selector: Selector, loader: Loader):
         super().__init__(master=master, width=display_size[0], height=display_size[1])
 
+        loader.subscribe_on_load(callback=self._on_load)
+        loader.subscribe_on_unload(callback=self._on_unload)
+
+        selector.subscribe_on_select(callback=self._on_select)
+        
         self._selector = selector
 
         self._image_frames: Dict[Path, ImageFrame] = {}
@@ -25,9 +30,6 @@ class ImageViewFrame(tk.Frame, Mapping):
 
         self._load_frame: LoadFrame = LoadFrame(master=self, display_size=display_size)
         self._load_frame.place(relx=0.5, rely=0.5, anchor="center")
-
-        loader.subscribe_on_load(callback=self._on_load)
-        loader.subscribe_on_unload(callback=self._on_unload)
 
     def __getitem__(self, path: Path):
         if path not in self._images:
@@ -57,6 +59,14 @@ class ImageViewFrame(tk.Frame, Mapping):
     def _on_unload(self, unloaded: Path) -> None:
         if unloaded is not None:
             self.remove_image_frame(path=unloaded)
+
+    def _on_select(self, path: Path, selected: bool) -> None:
+        if path not in self._image_frames:
+            return None
+        if selected:
+            self._image_frames[path].select()
+        else:
+            self._image_frames[path].unselect()
 
     def _create_image_frame(self, path: Path, image: Image.Image) -> Self:
         self._image_frames[path] = ImageFrame(master=self,

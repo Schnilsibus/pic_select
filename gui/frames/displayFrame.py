@@ -28,6 +28,8 @@ class DisplayFrame(ttk.Frame):
 
         selector.subscribe_on_select(callback=self._on_select)
 
+        self._selector = selector
+
         self._selection_count: tk.StringVar = tk.StringVar(self, f"{0:04}")
         self._selection_count_label: tk.Label = tk.Label(master=self,
                                                         textvariable=self._selection_count,
@@ -55,8 +57,8 @@ class DisplayFrame(ttk.Frame):
     def _on_new_image(self, path: Path) -> None:
         self.show_image(path=path)
 
-    def _on_select(self, selection: List[Path]) -> None:
-        self._selection_count.set(f"{len(selection):04}")
+    def _on_select(self, path: Path, selected: bool) -> None:
+        self._selection_count.set(f"{len(self._selector.get_selection()):04}")
 
     def setup_displays(self, selector: Selector, loader: Loader) -> None:
         self.master.update_idletasks()
@@ -74,15 +76,11 @@ class DisplayFrame(ttk.Frame):
     def show_image(self, path: Path) -> None:
         self._image_view_frame.display_image_frame(path=path)
         self._image_view_frame.tkraise()
+        self._image_view_frame.focus()
 
     def show_select_image(self) -> None:
         self._select_image_frame.tkraise()
-
-    def show_forward(self) -> None:
-        raise NotImplementedError()
-
-    def show_backward(self) -> None:
-        raise NotImplementedError()
+        self._select_image_frame.focus()
 
 
 
