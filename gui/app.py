@@ -8,6 +8,7 @@ from ..logic.load.loaderController import LoaderController
 from ..logic.selector import Selector
 
 from .frames.displayFrame import DisplayFrame
+from .frames.displays.imageViewFrame import ImageViewFrame
 
 
 
@@ -58,6 +59,10 @@ class App(tk.Tk):
         self._displayFrame.pack(fill="both", expand=True)
         self._displayFrame.setup_displays(selector=selector, loader=loader)
         self._displayFrame.show_select_image()
+
+    @property
+    def image_view_frame(self) -> ImageViewFrame:
+        return self._displayFrame.image_view_frame
 
     def _on_right_arrow(self, event) -> None:
         self._inputHandler.handle_input(input=UserInput.FORWARD)

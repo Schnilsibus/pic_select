@@ -1,7 +1,6 @@
 from queue import Queue
 from typing import Callable, Set
 from pathlib import Path
-from PIL import Image
 
 from .loader import Loader
 
@@ -32,8 +31,6 @@ class LoaderController:
         self._idle_callbacks: Set[Callable[[], None]] = set()
         self._busy_callbacks: Set[Callable[[], None]] = set()
 
-        self._index_callbacks: Set[Callable[[Path], None]] = set()
-
     def _run(self) -> None:
         while True:
             request = self._queue.get()
@@ -61,8 +58,6 @@ class LoaderController:
             self._current_index = 0
         if self._current_index >= len(self._loader.files):
             self._current_index = len(self._loader.files) - 1
-
-        self._trigger_index()
 
         self._updateLoader()
 
@@ -106,16 +101,23 @@ class LoaderController:
         for callback in self._busy_callbacks:
             callback()
 
-    def _trigger_index(self) -> None:
-        path = self._loader.files[self._current_index]
-        for callback in self._index_callbacks:
-            callback(path)
-
     def mainloop(self) -> None:
             self._run()
 
     def current_file(self) -> Path:
         return self._loader.files[self._current_index]
+
+    def previous_file(self) -> Path:
+        previous_index = self._current_index - 1
+        if previous_index < 0:
+            previous_index = 0
+        return self._loader.files[previous_index]
+
+    def next_file(self) -> Path:
+            next_index = self._current_index + 1
+            if next_index == len(self._loader.files):
+                next_index = len(self._loader.files) - 1
+            return self._loader.files[next_index]
 
     def append_reload(self, path: Path) -> None:
         self._queue.put(path)
@@ -137,9 +139,3 @@ class LoaderController:
 
     def unsubscribe_on_busy(self, callback: Callable[[], None]):
         self._busy_callbacks.remove(callback)
-
-    def subscribe_on_index(self, callback: Callable[[Path], None]):
-        self._index_callbacks.add(callback)
-    
-    def unsubscribe_on_index(self, callback: Callable[[Path], None]):
-        self._index_callbacks.remove(callback)

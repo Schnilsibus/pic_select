@@ -6,7 +6,7 @@ from typing import Tuple
 class SelectImageFrame(tk.Frame):
 
     def __init__(self, master: tk.Widget, display_size: Tuple[int, int]):
-        super().__init__(master=master, background="yellow", width=display_size[0], height=display_size[1])
+        super().__init__(master=master, background="red", width=display_size[0], height=display_size[1])
 
         self.pack_propagate(False)
         

@@ -1,21 +1,25 @@
 import tkinter as tk
-from typing import Tuple, Dict, Self, Set, Callable
+from typing import Tuple, Dict, Self
 from pathlib import Path
 from collections.abc import Mapping
 from PIL import Image
 
 from ....logic.selector import Selector
 from ....logic.load.loader import Loader
+from ....logic.load.loaderController import LoaderController
 
 from ..components.imageFrame import ImageFrame
 from ..displays.loadFrame import LoadFrame
 
 
 # TODO: Problem: selecting moves the image slightly -> Only in full size app not in isolated test!
+# TODO: Problem: fame is slightly cut of at bottom! -> Only in full size app not in isolated test!
 class ImageViewFrame(tk.Frame, Mapping):
 
     def __init__(self, master: tk.Widget, display_size: Tuple[int, int], selector: Selector, loader: Loader):
-        super().__init__(master=master, width=display_size[0], height=display_size[1])
+        super().__init__(master=master, width=display_size[0], height=display_size[1], background="black")
+
+        self.pack_propagate(False)
 
         loader.subscribe_on_load(callback=self._on_load)
         loader.subscribe_on_unload(callback=self._on_unload)
@@ -29,7 +33,7 @@ class ImageViewFrame(tk.Frame, Mapping):
         self._current_image_path: Path = None
 
         self._load_frame: LoadFrame = LoadFrame(master=self, display_size=display_size)
-        self._load_frame.place(relx=0.5, rely=0.5, anchor="center")
+        self._load_frame.place(relx=0.5, rely=0.5, anchor="center", )
 
     def __getitem__(self, path: Path):
         if path not in self._images:

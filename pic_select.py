@@ -25,6 +25,8 @@ def start():
               selector=selector,
               fullscreen=False)
 
+    inputHandler.set_image_view_frame(imageViewFrame=app.image_view_frame)
+
     worker_thread.start()
 
     selected_file = ask_file_name(parent=app)
