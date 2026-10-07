@@ -39,6 +39,13 @@ class DisplayFrame(ttk.Frame):
                                                         background="grey")
         self._busy_indicator_label.place(relx=0, rely=1, anchor="sw")
 
+        self._image_name: tk.StringVar = tk.StringVar(self, "")
+        self._image_name_label: tk.Label = tk.Label(master=self,
+                                                    textvariable=self._image_name,
+                                                    font=("Arial", -20),
+                                                    background="grey")
+        self._image_name_label.place(relx=0.5, rely=1, anchor="s")
+
         self._select_image_frame: SelectImageFrame = None
         self._image_view_frame: ImageViewFrame = None
 
@@ -84,3 +91,6 @@ class DisplayFrame(ttk.Frame):
     def show_select_image(self) -> None:
         self._select_image_frame.tkraise()
         self._select_image_frame.focus()
+
+    def set_image_name(self, path: Path) -> None:
+        self._image_name.set(path.name)

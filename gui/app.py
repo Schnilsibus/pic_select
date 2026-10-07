@@ -17,7 +17,7 @@ _PADDING_PERCENT = 0.15
 _MIN_WINDOW_DIM =  int(25 / _PADDING_PERCENT) + 1
 
 
-# TODO: Problem: clicking to next image too slow because first backend update (loaderController) then front end --> Change!! 
+# TODO: Add back Image number display
 class App(tk.Tk):
 
     def __init__(
@@ -61,7 +61,11 @@ class App(tk.Tk):
         self._displayFrame.show_select_image()
 
     @property
-    def image_view_frame(self) -> ImageViewFrame:
+    def displayFrame(self) -> DisplayFrame:
+        return self._displayFrame
+    
+    @property
+    def imageViewFrame(self) -> ImageViewFrame:
         return self._displayFrame.image_view_frame
 
     def _on_right_arrow(self, event) -> None:
@@ -88,6 +92,7 @@ class App(tk.Tk):
     def _on_f_11(self, event) -> None:
         self.toggle_fullscreen()
 
+    # TODO: do not think I need this the show_image! -> should happen with loader event anyways
     def mainloop(self, path: Path, n = 0):
         self._displayFrame.show_image(path=path)
         return super().mainloop(n)

@@ -15,7 +15,7 @@ def distance(indexA, indexB) -> int:
     return abs(indexA - indexB)
 
 
-
+# TODO: Problem: Order when skiping through Images is out of Whack!!
 class LoaderController:
     def __init__(self, loader: Loader, preload_length: int = 6, batch_size: int = 3):
         self._preload_length = preload_length

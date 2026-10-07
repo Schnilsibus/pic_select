@@ -25,7 +25,8 @@ def start():
               selector=selector,
               fullscreen=False)
 
-    inputHandler.set_image_view_frame(imageViewFrame=app.image_view_frame)
+    inputHandler.set_display_frame(displayFrame=app.displayFrame)
+    inputHandler.set_image_view_frame(imageViewFrame=app.imageViewFrame)
 
     worker_thread.start()
 
