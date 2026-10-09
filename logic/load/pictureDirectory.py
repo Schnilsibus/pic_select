@@ -8,20 +8,10 @@ class PictureDirectory(UserList):
     def __init__(self, directory: Path = None):
         if directory is None:
             self._directory = directory
+            self._files = list()
         else:
             self.directory = directory
-
-    def __getitem__(self, i):
-        return self._files[i]
-
-    def __contains__(self, path: Path):
-        return path in self._files
-
-    def __iter__(self):
-        return iter(self._files)
-
-    def __len__(self):
-        return len(self._files)
+        self.data = self._files
     
     def _lookup_files(self) -> None:
         self._files = [f for f in self._directory.iterdir() if f.is_file()]
@@ -38,6 +28,7 @@ class PictureDirectory(UserList):
         else:
             self._directory = directory
         self._lookup_files()
+        self.data = self._files
 
     def get_relative_file(self, anchor: Path, distance: int) -> Path:
         if anchor not in self:

@@ -51,9 +51,15 @@ class LoaderThread:
 
         self._updateLoader(path = request)
 
+    def _is_update_needed(self, path: Path) -> bool:
+        if self._centre_file is None:
+            return True
+        else:
+            return self._picture_directory.distance(self._centre_file, path) > self._batch_size
+
     def _updateLoader(self, path: Path) -> None:
 
-        if self._picture_directory.distance(self._centre_file, path) <= self._batch_size:
+        if not self._is_update_needed(path=path):
             return None
 
         self._unload_out_of_scope_images(path=path)
@@ -104,7 +110,7 @@ class LoaderThread:
         self._queue.put(path)
 
     def update_to(self, path: Path) -> None:
-        if self._picture_directory.distance(self._centre_file, path) > self._preload_length:
+        if self._centre_file is None or self._picture_directory.distance(self._centre_file, path) > self._preload_length:
             self._append_reload(path=path)
         else:
             self._clear_queue()

@@ -84,7 +84,11 @@ class ImageViewFrame(tk.Frame, Mapping):
         self._image_frames[path].place(relx=0.5, rely=0.5, anchor="center")
         self._image_frames[self._current_image_path].tkraise()
 
-    def remove_image_frame(self, path: Path) -> Self:
+    @property
+    def current_image_path(self) -> Path:
+        return self._current_image_path
+
+    def remove_image_frame(self, path: Path) -> None:
         self._image_frames.pop(path)
 
     def display_image_frame(self, path: Path) -> None:
@@ -103,3 +107,6 @@ class ImageViewFrame(tk.Frame, Mapping):
                 frame.unselect()
             else:
                 frame.select()
+
+    def is_waiting_on_loader(self) -> bool:
+        return self._current_image_path not in self

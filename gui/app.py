@@ -25,7 +25,7 @@ class App(tk.Tk):
             title: str,
             inputHandler: UserInputHandler,
             loader: Loader,
-            loaderController: LoaderThread,
+            loaderThread: LoaderThread,
             selector: Selector,
             fullscreen = True):
         super().__init__()
@@ -55,7 +55,7 @@ class App(tk.Tk):
 
         self._inputHandler = inputHandler
 
-        self._displayFrame = DisplayFrame(master=self, loaderController=loaderController, selector=selector)
+        self._displayFrame = DisplayFrame(master=self, loaderController=loaderThread, selector=selector)
         self._displayFrame.pack(fill="both", expand=True)
         self._displayFrame.setup_displays(selector=selector, loader=loader)
         self._displayFrame.show_select_image()

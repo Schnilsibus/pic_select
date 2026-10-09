@@ -2,6 +2,7 @@ from typing import Literal
 
 from ..clipboard import copy_files_to_clipboard
 from ..load.loaderThread import LoaderThread
+from ..load.pictureDirectory import PictureDirectory
 from ..selector import Selector
 from .UserInput import UserInput
 
@@ -14,16 +15,16 @@ from ...log import logger
 # TODO: change too many clicks protection!! -> only ignore input when at the edge of the loaded images
 class UserInputHandler:
 
-    def __init__(self, selector: Selector, loaderController: LoaderThread):
+    def __init__(self, selector: Selector, loaderThread: LoaderThread, pictureDirectory: PictureDirectory):
 
         self._selector = selector
-        self._loaderController = loaderController
+        self._loaderThread = loaderThread
+        self._pictureDirectory = pictureDirectory
         
         self._imageViewFrame = None
         self._displayFrame = None
 
         self._last_arrow_input: Literal[UserInput.FORWARD, UserInput.BACKWARD] = None
-        self._loader_busy: bool = False
 
     def set_image_view_frame(self, imageViewFrame: ImageViewFrame) -> None:
         self._imageViewFrame = imageViewFrame
@@ -50,34 +51,35 @@ class UserInputHandler:
                 self._unselect_all()
 
     def _forward(self) -> None:
-        if self._loader_busy and self._last_arrow_input == UserInput.FORWARD:
+        if self._imageViewFrame.is_waiting_on_loader() and self._last_arrow_input == UserInput.FORWARD:
             return None
+
+        self._last_arrow_input = UserInput.FORWARD
 
         logger.log_user_input(input=str(UserInput.FORWARD))
 
-        next_file = self._loaderController.next_file()
-        self._imageViewFrame.display_image_frame(path=next_file)
-        self._displayFrame.set_image_name(path=next_file)
-
-        self._last_arrow_input = UserInput.FORWARD
-        self._loaderController.append_forward()
+        next_file = self._pictureDirectory.next_file(anchor=self._imageViewFrame.current_image_path)
+        if next_file is not None:
+            self._imageViewFrame.display_image_frame(path=next_file)
+            self._displayFrame.set_image_name(path=next_file)
+            self._loaderThread.update_to(path=next_file)
 
     def _backward(self) -> None:
-        if self._loader_busy and self._last_arrow_input == UserInput.BACKWARD:
+        if self._imageViewFrame.is_waiting_on_loader() and self._last_arrow_input == UserInput.BACKWARD:
             return None
+
+        self._last_arrow_input = UserInput.BACKWARD
 
         logger.log_user_input(input=str(UserInput.BACKWARD))
         
-        previous_file = self._loaderController.previous_file()
-        print(previous_file)
-        self._imageViewFrame.display_image_frame(path=previous_file)
-        self._displayFrame.set_image_name(path=previous_file)
-        
-        self._last_arrow_input = UserInput.BACKWARD
-        self._loaderController.append_backward()
+        previous_file = self._pictureDirectory.previous_file(anchor=self._imageViewFrame.current_image_path)
+        if previous_file is not None:
+            self._imageViewFrame.display_image_frame(path=previous_file)
+            self._displayFrame.set_image_name(path=previous_file)
+            self._loaderThread.update_to(path=previous_file)
 
     def _select(self) -> None:
-        path = self._loaderController.current_file()
+        path = self._imageViewFrame.current_image_path
         self._selector.toggle(path)
 
     def _copy(self) -> None:

@@ -2,6 +2,7 @@ import threading
 
 from .logic.load.loader import Loader
 from .logic.load.loaderThread import LoaderThread
+from .logic.load.pictureDirectory import PictureDirectory
 from .logic.selector import Selector
 from .logic.input.userInputHandler import UserInputHandler
 
@@ -11,17 +12,18 @@ from .gui.selectFile import ask_file_name
 
 
 def start():
-    loader = Loader()
-    loaderController = LoaderThread(loader=loader)
+    pictureDirectory = PictureDirectory()
+    loader = Loader(picture_directory=pictureDirectory)
+    loaderThread = LoaderThread(loader=loader, picture_directory=pictureDirectory)
     selector = Selector()
-    inputHandler = UserInputHandler(selector=selector, loaderController=loaderController)
+    inputHandler = UserInputHandler(selector=selector, loaderThread=loaderThread, pictureDirectory=pictureDirectory)
 
-    worker_thread = threading.Thread(target=loaderController.mainloop, daemon=True)
+    worker_thread = threading.Thread(target=loaderThread.mainloop, daemon=True)
 
     app = App(title="",
               inputHandler=inputHandler,
               loader=loader,
-              loaderController=loaderController,
+              loaderThread=loaderThread,
               selector=selector,
               fullscreen=False)
 
@@ -32,9 +34,8 @@ def start():
 
     selected_file = ask_file_name(parent=app)
 
-    loader.directory = selected_file.parent
+    pictureDirectory.directory = selected_file.parent
 
-    app.after(1,
-              loaderController._append_reload(path=selected_file))
+    app.after(0, loaderThread.update_to(path=selected_file))
 
     app.mainloop(path=selected_file)
