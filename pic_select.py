@@ -1,7 +1,7 @@
 import threading
 
 from .logic.load.loader import Loader
-from .logic.load.loaderController import LoaderController
+from .logic.load.loaderThread import LoaderThread
 from .logic.selector import Selector
 from .logic.input.userInputHandler import UserInputHandler
 
@@ -12,7 +12,7 @@ from .gui.selectFile import ask_file_name
 
 def start():
     loader = Loader()
-    loaderController = LoaderController(loader=loader)
+    loaderController = LoaderThread(loader=loader)
     selector = Selector()
     inputHandler = UserInputHandler(selector=selector, loaderController=loaderController)
 
@@ -35,6 +35,6 @@ def start():
     loader.directory = selected_file.parent
 
     app.after(1,
-              loaderController.append_reload(path=selected_file))
+              loaderController._append_reload(path=selected_file))
 
     app.mainloop(path=selected_file)

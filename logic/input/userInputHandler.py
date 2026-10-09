@@ -1,7 +1,7 @@
 from typing import Literal
 
 from ..clipboard import copy_files_to_clipboard
-from ..load.loaderController import LoaderController
+from ..load.loaderThread import LoaderThread
 from ..selector import Selector
 from .UserInput import UserInput
 
@@ -14,7 +14,7 @@ from ...log import logger
 # TODO: change too many clicks protection!! -> only ignore input when at the edge of the loaded images
 class UserInputHandler:
 
-    def __init__(self, selector: Selector, loaderController: LoaderController):
+    def __init__(self, selector: Selector, loaderController: LoaderThread):
 
         self._selector = selector
         self._loaderController = loaderController

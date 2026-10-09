@@ -3,7 +3,7 @@ from tkinter import ttk
 from typing import List, Tuple
 from pathlib import Path
 
-from ...logic.load.loaderController import LoaderController
+from ...logic.load.loaderThread import LoaderThread
 from ...logic.load.loader import Loader
 from ...logic.selector import Selector
 
@@ -17,7 +17,7 @@ _PADDING_PIXELS = 70
 
 class DisplayFrame(ttk.Frame):
 
-    def __init__(self, master: tk.Widget, loaderController: LoaderController, selector: Selector):
+    def __init__(self, master: tk.Widget, loaderController: LoaderThread, selector: Selector):
         super().__init__(master=master)
 
         loaderController.subscribe_on_busy(callback=self._on_loader_busy)

@@ -4,7 +4,7 @@ from pathlib import Path
 from ..logic.input.UserInput import UserInput
 from ..logic.input.userInputHandler import UserInputHandler
 from ..logic.load.loader import Loader
-from ..logic.load.loaderController import LoaderController
+from ..logic.load.loaderThread import LoaderThread
 from ..logic.selector import Selector
 
 from .frames.displayFrame import DisplayFrame
@@ -25,7 +25,7 @@ class App(tk.Tk):
             title: str,
             inputHandler: UserInputHandler,
             loader: Loader,
-            loaderController: LoaderController,
+            loaderController: LoaderThread,
             selector: Selector,
             fullscreen = True):
         super().__init__()

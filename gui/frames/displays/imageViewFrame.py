@@ -6,7 +6,7 @@ from PIL import Image
 
 from ....logic.selector import Selector
 from ....logic.load.loader import Loader
-from ....logic.load.loaderController import LoaderController
+from ....logic.load.loaderThread import LoaderThread
 
 from ..components.imageFrame import ImageFrame
 from ..displays.loadFrame import LoadFrame
