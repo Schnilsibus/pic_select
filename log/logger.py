@@ -1,6 +1,5 @@
 from pathlib import Path
-from time import time
-from enum import Enum
+from datetime import datetime
 
 class Logger():
     def __init__(self, log_file: Path = None):
@@ -14,8 +13,8 @@ class Logger():
         self._log(message=input, new_line=True)
 
     def _log(self, message: str, new_line: bool = False) -> None:
-        current_time = time()
-        good_message = f"{current_time:.1}: {message}"
+        current_time = datetime.now().strftime("%H:%M:%S")
+        good_message = f"{current_time}: {message}"
         if self._log_file is None:
             if new_line:
                 print()
