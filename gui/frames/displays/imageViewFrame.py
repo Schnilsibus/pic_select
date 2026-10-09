@@ -11,6 +11,8 @@ from ....logic.load.loaderController import LoaderController
 from ..components.imageFrame import ImageFrame
 from ..displays.loadFrame import LoadFrame
 
+from ....log import logger
+
 
 # TODO: Problem: selecting moves the image slightly -> Only in full size app not in isolated test!
 # TODO: Problem: fame is slightly cut of at bottom! -> Only in full size app not in isolated test!
@@ -56,13 +58,15 @@ class ImageViewFrame(tk.Frame, Mapping):
         return len(self._image_frames)
 
     def _on_load(self, path: Path, image: Image.Image) -> None:
-            self._create_image_frame(path=path, image=image)
-            if self._current_image_path == path:
-                self.display_image_frame(path=path)
+        self._create_image_frame(path=path, image=image)
+        logger.log_file_action(thread="gui", file=path, action="created")
+        if self._current_image_path == path:
+            self.display_image_frame(path=path)
     
     def _on_unload(self, unloaded: Path) -> None:
         if unloaded is not None:
             self.remove_image_frame(path=unloaded)
+        logger.log_file_action(thread="gui", file=unloaded, action="destroyed")
 
     def _on_select(self, path: Path, selected: bool) -> None:
         if path not in self._image_frames:
@@ -78,7 +82,7 @@ class ImageViewFrame(tk.Frame, Mapping):
                                               image=image,
                                               selected=self._selector.is_selected(path=path))
         self._image_frames[path].place(relx=0.5, rely=0.5, anchor="center")
-        self.display_image_frame(path=self._current_image_path)
+        self._image_frames[self._current_image_path].tkraise()
 
     def remove_image_frame(self, path: Path) -> Self:
         self._image_frames.pop(path)
@@ -87,8 +91,10 @@ class ImageViewFrame(tk.Frame, Mapping):
         if path not in self:
             self._load_frame.set_text(name=path.name)
             self._load_frame.tkraise()
+            logger.log_file_action(thread="gui", file=path, action="waiting")
         else:
             self._image_frames[path].tkraise()
+            logger.log_file_action(thread="gui", file=path, action="displaying")
         self._current_image_path = path
 
     def select_all(self, unselect = False):

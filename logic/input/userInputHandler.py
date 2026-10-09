@@ -8,6 +8,8 @@ from .UserInput import UserInput
 from ...gui.frames.displays.imageViewFrame import ImageViewFrame
 from ...gui.frames.displayFrame import DisplayFrame
 
+from ...log import logger
+
 
 # TODO: change too many clicks protection!! -> only ignore input when at the edge of the loaded images
 class UserInputHandler:
@@ -51,6 +53,8 @@ class UserInputHandler:
         if self._loader_busy and self._last_arrow_input == UserInput.FORWARD:
             return None
 
+        logger.log_user_input(input=str(UserInput.FORWARD))
+
         next_file = self._loaderController.next_file()
         self._imageViewFrame.display_image_frame(path=next_file)
         self._displayFrame.set_image_name(path=next_file)
@@ -61,8 +65,11 @@ class UserInputHandler:
     def _backward(self) -> None:
         if self._loader_busy and self._last_arrow_input == UserInput.BACKWARD:
             return None
+
+        logger.log_user_input(input=str(UserInput.BACKWARD))
         
         previous_file = self._loaderController.previous_file()
+        print(previous_file)
         self._imageViewFrame.display_image_frame(path=previous_file)
         self._displayFrame.set_image_name(path=previous_file)
         

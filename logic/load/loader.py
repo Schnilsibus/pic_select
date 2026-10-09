@@ -4,6 +4,8 @@ from typing import Dict, Callable, Set, List
 from collections.abc import Mapping
 import gc
 
+from ...log import logger
+
 
 
 _EXIF_FORMATS = ["JPEG", "TIFF"]
@@ -83,6 +85,7 @@ class Loader(Mapping):
                 image = ImageOps.exif_transpose(image=image)
         
         self._images[path] = image
+        logger.log_file_action(thread="bac", file=path, action="loaded")
         self._trigger_load(image=image, path=path)
         return image
 
@@ -93,6 +96,7 @@ class Loader(Mapping):
         self._images[path].close()
         self._images.pop(path)
         gc.collect()
+        logger.log_file_action(thread="bac", file=path, action="unloaded")
         self._trigger_unload(unloaded_path=path)
 
     def _trigger_load(self, image: Image.Image, path: Path) -> None:

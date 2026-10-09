@@ -4,6 +4,8 @@ from pathlib import Path
 
 from .loader import Loader
 
+from ...log import logger
+
 
 
 _FORWARD_REQUEST = "forward"
@@ -16,6 +18,11 @@ def distance(indexA, indexB) -> int:
 
 
 # TODO: Problem: Order when skiping through Images is out of Whack!!
+# TODO: SUB-Problem: LoaderController and GUI are out of sync:
+# GUI displays last image before loader has to reload
+# Next input causes the loader thread to kick in
+# Next input will be processed by the gui immidiatly but loader will wait unit three images are loaded
+# so gui displays index 6 while loader remains at index 7 -> therefore no image further back can be displayed
 class LoaderController:
     def __init__(self, loader: Loader, preload_length: int = 6, batch_size: int = 3):
         self._preload_length = preload_length
@@ -69,11 +76,13 @@ class LoaderController:
         self._unload_out_of_scope_images()
         self._load_in_scope_images()
 
+        self._centre_index = self._current_index
+
     def _unload_out_of_scope_images(self) -> None:
         out_of_scope_images = []
         for path in self._loader.keys():
             index = self._loader.files.index(path)
-            if distance(self._centre_index, index) > self._preload_length:
+            if distance(self._current_index, index) > self._preload_length:
                 out_of_scope_images.append(path)
         for path in out_of_scope_images:
             self._loader.unload(path=path)
@@ -89,7 +98,7 @@ class LoaderController:
             self._loader.load(path=path)
 
         load_index(self._current_index)
-        for relative_position in range(1, self._preload_length):
+        for relative_position in range(1, self._preload_length + 1):
             load_index(self._current_index + relative_position)
             load_index(self._current_index - relative_position)
 
