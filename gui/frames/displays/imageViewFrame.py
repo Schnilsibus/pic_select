@@ -82,7 +82,10 @@ class ImageViewFrame(tk.Frame, Mapping):
                                               image=image,
                                               selected=self._selector.is_selected(path=path))
         self._image_frames[path].place(relx=0.5, rely=0.5, anchor="center")
-        self._image_frames[self._current_image_path].tkraise()
+        if self._current_image_path in self:
+            self._image_frames[self._current_image_path].tkraise()
+        else:
+            self._load_frame.tkraise()
 
     @property
     def current_image_path(self) -> Path:

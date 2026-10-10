@@ -9,12 +9,6 @@ from ...log import logger
 
 
 
-# TODO: Problem: Order when skiping through Images is out of Whack!!
-# TODO: SUB-Problem: LoaderController and GUI are out of sync:
-# GUI displays last image before loader has to reload
-# Next input causes the loader thread to kick in
-# Next input will be processed by the gui immidiatly but loader will wait unit three images are loaded
-# so gui displays index 6 while loader remains at index 7 -> therefore no image further back can be displayed
 class LoaderThread:
     def __init__(self, loader: Loader, picture_directory: PictureDirectory, centre_file: Path = None, preload_length: int = 6, batch_size: int = 3):
         self._preload_length = preload_length
@@ -110,7 +104,7 @@ class LoaderThread:
         self._queue.put(path)
 
     def update_to(self, path: Path) -> None:
-        if self._centre_file is None or self._picture_directory.distance(self._centre_file, path) > self._preload_length:
+        if self._centre_file is None or self._picture_directory.distance(self._centre_file, path) > self._batch_size:
             self._append_reload(path=path)
         else:
             self._clear_queue()

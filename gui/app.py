@@ -17,7 +17,7 @@ _PADDING_PERCENT = 0.15
 _MIN_WINDOW_DIM =  int(25 / _PADDING_PERCENT) + 1
 
 
-# TODO: Add back Image number display
+
 class App(tk.Tk):
 
     def __init__(

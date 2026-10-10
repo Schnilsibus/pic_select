@@ -12,7 +12,7 @@ from ...gui.frames.displayFrame import DisplayFrame
 from ...log import logger
 
 
-# TODO: change too many clicks protection!! -> only ignore input when at the edge of the loaded images
+
 class UserInputHandler:
 
     def __init__(self, selector: Selector, loaderThread: LoaderThread, pictureDirectory: PictureDirectory):
