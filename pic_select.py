@@ -37,6 +37,6 @@ def start():
     pictureDirectory.directory = selected_file.parent
 
     app.after(0, loaderThread.update_to(path=selected_file))
-    app.displayFrame.set_image_name(selected_file)
+    app.displayFrame.show_image(selected_file)
 
-    app.mainloop(path=selected_file)
+    app.mainloop()

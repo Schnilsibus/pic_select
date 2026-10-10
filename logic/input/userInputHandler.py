@@ -60,8 +60,7 @@ class UserInputHandler:
 
         next_file = self._pictureDirectory.next_file(anchor=self._imageViewFrame.current_image_path)
         if next_file is not None:
-            self._imageViewFrame.display_image_frame(path=next_file)
-            self._displayFrame.set_image_name(path=next_file)
+            self._displayFrame.show_image(path=next_file)
             self._loaderThread.update_to(path=next_file)
 
     def _backward(self) -> None:
@@ -74,8 +73,7 @@ class UserInputHandler:
         
         previous_file = self._pictureDirectory.previous_file(anchor=self._imageViewFrame.current_image_path)
         if previous_file is not None:
-            self._imageViewFrame.display_image_frame(path=previous_file)
-            self._displayFrame.set_image_name(path=previous_file)
+            self._displayFrame.show_image(path=previous_file)
             self._loaderThread.update_to(path=previous_file)
 
     def _select(self) -> None:

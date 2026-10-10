@@ -8,7 +8,7 @@ from .pictureDirectory import PictureDirectory
 from ...log import logger
 
 
-
+# TODO: check for new queue event every time I finished loading an image -> discard old one and work on newest one
 class LoaderThread:
     def __init__(self, loader: Loader, picture_directory: PictureDirectory, centre_file: Path = None, preload_length: int = 6, batch_size: int = 3):
         self._preload_length = preload_length

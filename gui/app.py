@@ -92,11 +92,6 @@ class App(tk.Tk):
     def _on_f_11(self, event) -> None:
         self.toggle_fullscreen()
 
-    # TODO: do not think I need this the show_image! -> should happen with loader event anyways
-    def mainloop(self, path: Path, n = 0):
-        self._displayFrame.show_image(path=path)
-        return super().mainloop(n)
-
     def toggle_fullscreen(self) -> None:
         self._is_fullscreen = not self._is_fullscreen
         self.attributes("-fullscreen", self._is_fullscreen)

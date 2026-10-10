@@ -84,6 +84,7 @@ class DisplayFrame(ttk.Frame):
         return width - _PADDING_PIXELS, height -_PADDING_PIXELS
 
     def show_image(self, path: Path) -> None:
+        self._image_name.set(path.name)
         self._image_view_frame.display_image_frame(path=path)
         self._image_view_frame.tkraise()
         self._image_view_frame.focus()
