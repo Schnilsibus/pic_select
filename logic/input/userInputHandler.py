@@ -1,4 +1,5 @@
 from typing import Literal
+from pathlib import Path
 
 from ..clipboard import copy_files_to_clipboard
 from ..load.loaderThread import LoaderThread
@@ -32,11 +33,13 @@ class UserInputHandler:
     def set_display_frame(self, displayFrame: DisplayFrame) -> None:
             self._displayFrame = displayFrame
 
-    def handle_input(self, input: UserInput):
+    def handle_input(self, input: UserInput, **kwargs):
         if input not in UserInput:
             raise RuntimeError("Invalid input")
 
         match input:
+            case UserInput.OPEN:
+                self._open(file = kwargs["file"])
             case UserInput.FORWARD:
                 self._forward()
             case UserInput.BACKWARD:
@@ -49,6 +52,12 @@ class UserInputHandler:
                 self._select_all()
             case UserInput.UNSELECT_ALL:
                 self._unselect_all()
+
+    def _open(self, file: Path) -> None:
+        print(f"Shoud open {file}")
+        self._pictureDirectory.directory = file.parent
+        self._loaderThread.update_to(path=file)
+        self._displayFrame.show_image(path=file)
 
     def _forward(self) -> None:
         if self._imageViewFrame.is_waiting_on_loader() and self._last_arrow_input == UserInput.FORWARD:

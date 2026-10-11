@@ -10,6 +10,8 @@ from ..logic.selector import Selector
 from .frames.displayFrame import DisplayFrame
 from .frames.displays.imageViewFrame import ImageViewFrame
 
+from .selectFile import ask_file_name
+
 
 
 _PADDING_PERCENT = 0.15
@@ -46,6 +48,8 @@ class App(tk.Tk):
         self.bind("<Control-A>", self._on_strg_a)
         self.bind("<Control-t>", self._on_strg_t)
         self.bind("<Control-T>", self._on_strg_t)
+        self.bind("<Control-o>", self._on_strg_o)
+        self.bind("<Control-O>", self._on_strg_o)
         self.bind("<Escape>", self._on_escape)
         self.bind("<F11>", self._on_f_11)
 
@@ -91,6 +95,10 @@ class App(tk.Tk):
 
     def _on_f_11(self, event) -> None:
         self.toggle_fullscreen()
+
+    def _on_strg_o(self, event) -> None:
+        file = ask_file_name(parent=self)
+        self._inputHandler.handle_input(input=UserInput.OPEN, file=file)
 
     def toggle_fullscreen(self) -> None:
         self._is_fullscreen = not self._is_fullscreen

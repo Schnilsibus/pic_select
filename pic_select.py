@@ -32,11 +32,4 @@ def start():
 
     worker_thread.start()
 
-    selected_file = ask_file_name(parent=app)
-
-    pictureDirectory.directory = selected_file.parent
-
-    app.after(0, loaderThread.update_to(path=selected_file))
-    app.displayFrame.show_image(selected_file)
-
     app.mainloop()
