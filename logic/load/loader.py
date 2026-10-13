@@ -1,8 +1,7 @@
 from PIL import Image, ImageOps
 from pathlib import Path
-from typing import Dict, Callable, Set, List
+from typing import Dict, Callable, Set
 from collections.abc import Mapping
-import gc
 
 from .pictureDirectory import PictureDirectory
 
@@ -12,8 +11,8 @@ from ...log import logger
 
 _EXIF_FORMATS = ["JPEG", "TIFF"]
 
-
-
+# TODO: downsize to max possible display size! should make transpose faster
+# TODO: transpose myself
 class Loader(Mapping):
 
     def __init__(self, picture_directory: PictureDirectory):
@@ -49,15 +48,18 @@ class Loader(Mapping):
     def load(self, path: Path) -> Image.Image:
         if path not in self._picture_directory:
             raise KeyError(f"{path} not in {self._picture_directory.directory}")
-                
-        image = Image.open(path)
 
-        if image.format in _EXIF_FORMATS or image.format not in _EXIF_FORMATS:
+        if path in self:
+            return self[path]
+                
+        image: Image = Image.open(path)
+
+        if image.format in _EXIF_FORMATS:
             exif = image.getexif()
             orientation = exif.get(0x0112)
             if orientation is not None and orientation > 1:
                 image = ImageOps.exif_transpose(image=image)
-        
+                
         self._images[path] = image
         logger.log_file_action(thread="bac", file=path, action="loaded")
         self._trigger_load(image=image, path=path)
@@ -69,7 +71,6 @@ class Loader(Mapping):
 
         self._images[path].close()
         self._images.pop(path)
-        gc.collect()
         logger.log_file_action(thread="bac", file=path, action="unloaded")
         self._trigger_unload(unloaded_path=path)
 

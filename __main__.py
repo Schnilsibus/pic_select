@@ -4,6 +4,7 @@ from .test import test_code
 
 
 # TODO: investigate speed up load (not a lot of effort)
+# TODO: investigate time for frame framing (not a lot of effort)
 # TODO: check against python naming conventions
 def main():
     start()
