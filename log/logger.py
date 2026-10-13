@@ -12,6 +12,10 @@ class Logger():
     def log_user_input(self, input: str) -> None:
         self._log(message=input, new_line=True)
 
+    def log_benchmark(self, title: str, time_ms: int) -> None:
+        message = f"{title} - {time_ms}ms"
+        self._log(message=message, new_line=True)
+
     def _log(self, message: str, new_line: bool = False) -> None:
         current_time = datetime.now().strftime("%H:%M:%S")
         good_message = f"{current_time}: {message}"
