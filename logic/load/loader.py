@@ -1,6 +1,6 @@
-from PIL import Image, ImageOps
+from PIL import Image
 from pathlib import Path
-from typing import Dict, Callable, Set
+from typing import Dict, Callable, Set, Tuple
 from collections.abc import Mapping
 
 from .pictureDirectory import PictureDirectory
@@ -10,15 +10,26 @@ from ...log import logger
 
 
 _EXIF_FORMATS = ["JPEG", "TIFF"]
+_TRANSPOSE_MAP = {
+        2: Image.Transpose.FLIP_LEFT_RIGHT,
+        3: Image.Transpose.ROTATE_180,
+        4: Image.Transpose.FLIP_TOP_BOTTOM,
+        5: Image.Transpose.TRANSPOSE,
+        6: Image.Transpose.ROTATE_270,
+        7: Image.Transpose.TRANSVERSE,
+        8: Image.Transpose.ROTATE_90,
+    }
 
-# TODO: downsize to max possible display size! should make transpose faster
-# TODO: transpose myself
+
+
+
 class Loader(Mapping):
 
-    def __init__(self, picture_directory: PictureDirectory):
+    def __init__(self, picture_directory: PictureDirectory, max_image_size: Tuple[int, int] = None):
         if picture_directory is None:
             raise RuntimeError("picture_directory can not be None")
         self._picture_directory = picture_directory
+        self._max_image_size = max_image_size
 
         self._images: Dict[Path, Image.Image] = dict()
 
@@ -58,7 +69,11 @@ class Loader(Mapping):
             exif = image.getexif()
             orientation = exif.get(0x0112)
             if orientation is not None and orientation > 1:
-                image = ImageOps.exif_transpose(image=image)
+                method = _TRANSPOSE_MAP.get(orientation)
+                image = image.transpose(method)
+
+        if self._max_image_size is not None:
+            image.thumbnail(self._max_image_size, Image.Resampling.LANCZOS)
                 
         self._images[path] = image
         logger.log_file_action(thread="bac", file=path, action="loaded")

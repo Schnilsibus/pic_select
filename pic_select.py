@@ -5,6 +5,7 @@ from .logic.load.loaderThread import LoaderThread
 from .logic.load.pictureDirectory import PictureDirectory
 from .logic.selector import Selector
 from .logic.input.userInputHandler import UserInputHandler
+from .logic.sizeManager import SizeManager
 
 from .gui.app import App
 from .gui.selectFile import ask_file_name
@@ -13,7 +14,8 @@ from .gui.selectFile import ask_file_name
 
 def start():
     pictureDirectory = PictureDirectory()
-    loader = Loader(picture_directory=pictureDirectory)
+    sizeManager = SizeManager()
+    loader = Loader(picture_directory=pictureDirectory, max_image_size=sizeManager.max_monitor_extension)
     loaderThread = LoaderThread(loader=loader, picture_directory=pictureDirectory)
     selector = Selector()
     inputHandler = UserInputHandler(selector=selector, loaderThread=loaderThread, pictureDirectory=pictureDirectory)
