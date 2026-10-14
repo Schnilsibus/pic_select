@@ -5,8 +5,6 @@ from pathlib import Path
 from .loader import Loader
 from .pictureDirectory import PictureDirectory
 
-from ...log import logger
-
 
 
 class LoaderThread:
@@ -51,19 +49,15 @@ class LoaderThread:
     def _updateLoader(self, path: Path) -> None:
         if self._centre_file is None:
             self._centre_file = path
-            logger.log_file_action(thread="bac", file=path, action="centered")
 
         if self._unload_out_of_scope_images(path=path):
             self._centre_file = path
-            logger.log_file_action(thread="bac", file=path, action="centered")
             return None
         if self._load_in_scope_images(path=path):
             self._centre_file = path
-            logger.log_file_action(thread="bac", file=path, action="centered")
             return None
 
         self._centre_file = path
-        logger.log_file_action(thread="bac", file=path, action="centered")
 
     def _unload_out_of_scope_images(self, path: Path) -> bool:
         out_of_scope_images = []
@@ -114,10 +108,8 @@ class LoaderThread:
 
     def update_to(self, path: Path) -> None:
         if self._centre_file is None or self._picture_directory.distance(self._centre_file, path) > self._batch_size:
-            logger.log_file_action(thread="bac", file=path, action="queued")
             self._append_reload(path=path)
         else:
-            logger.log_file_action(thread="bac", file=self._centre_file, action="queued")
             self._append_reload(path=self._centre_file)
 
     def subscribe_on_idle(self, callback: Callable[[], None]):

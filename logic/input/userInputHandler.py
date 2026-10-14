@@ -10,8 +10,6 @@ from .UserInput import UserInput
 from ...gui.frames.displays.imageViewFrame import ImageViewFrame
 from ...gui.frames.displayFrame import DisplayFrame
 
-from ...log import logger
-
 
 
 class UserInputHandler:
@@ -65,8 +63,6 @@ class UserInputHandler:
 
         self._last_arrow_input = UserInput.FORWARD
 
-        logger.log_user_input(input=str(UserInput.FORWARD))
-
         next_file = self._pictureDirectory.next_file(anchor=self._imageViewFrame.current_image_path)
         if next_file is not None:
             self._displayFrame.show_image(path=next_file)
@@ -77,8 +73,6 @@ class UserInputHandler:
             return None
 
         self._last_arrow_input = UserInput.BACKWARD
-
-        logger.log_user_input(input=str(UserInput.BACKWARD))
         
         previous_file = self._pictureDirectory.previous_file(anchor=self._imageViewFrame.current_image_path)
         if previous_file is not None:

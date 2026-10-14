@@ -5,8 +5,6 @@ from collections.abc import Mapping
 
 from .pictureDirectory import PictureDirectory
 
-from ...log import logger
-
 
 
 _EXIF_FORMATS = ["JPEG", "TIFF"]
@@ -76,7 +74,6 @@ class Loader(Mapping):
             image.thumbnail(self._max_image_size, Image.Resampling.LANCZOS)
                 
         self._images[path] = image
-        logger.log_file_action(thread="bac", file=path, action="loaded")
         self._trigger_load(image=image, path=path)
         return image
 
@@ -86,7 +83,6 @@ class Loader(Mapping):
 
         self._images[path].close()
         self._images.pop(path)
-        logger.log_file_action(thread="bac", file=path, action="unloaded")
         self._trigger_unload(unloaded_path=path)
 
     def _trigger_load(self, image: Image.Image, path: Path) -> None:
