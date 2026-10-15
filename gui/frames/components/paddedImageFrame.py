@@ -6,7 +6,7 @@ from PIL import ImageTk
 class PaddedImageFrame(tk.Frame):
 
     def __init__(self, master: tk.Widget, image: ImageTk.PhotoImage, padding: int):
-        full_width, full_height = image.width() + padding, image.height() + padding
+        full_width, full_height = image.width() + (padding * 2), image.height() + (padding * 2)
 
         super().__init__(master, width = full_width, height = full_height)
 
@@ -15,6 +15,8 @@ class PaddedImageFrame(tk.Frame):
 
         self._image_label.place(relx=0.5, rely=0.5, anchor="center")
         self._pad_Frame.place(relx=0.5, rely=0.5, anchor="center")
+
+        self.pack_propagate(False)
 
 
 

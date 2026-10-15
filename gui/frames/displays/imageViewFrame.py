@@ -7,13 +7,11 @@ from time import perf_counter
 
 from ....logic.selector import Selector
 from ....logic.load.loader import Loader
-from ....logic.load.loaderThread import LoaderThread
 
 from ..components.imageFrame import ImageFrame
 from ..displays.loadFrame import LoadFrame
 
 
-# TODO: Problem: fame is slightly cut of at right! -> Only in full size app not in isolated test! vertical images
 class ImageViewFrame(tk.Frame, Mapping):
 
     def __init__(self, master: tk.Widget, display_size: Tuple[int, int], selector: Selector, loader: Loader):

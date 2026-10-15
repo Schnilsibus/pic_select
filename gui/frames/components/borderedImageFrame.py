@@ -6,7 +6,7 @@ from .paddedImageFrame import PaddedImageFrame
 class BorderedImageFrame(tk.Frame):
 
     def __init__(self, master: tk.Widget, image: ImageTk.PhotoImage, padding: int, borderwidth: int):
-        full_width, full_height = image.width() + padding + borderwidth, image.height() + padding + borderwidth
+        full_width, full_height = image.width() + (padding * 2) + (borderwidth * 2), image.height() + (padding * 2) + (borderwidth * 2)
 
         super().__init__(master, width = full_width, height = full_height)
 
@@ -15,6 +15,8 @@ class BorderedImageFrame(tk.Frame):
 
         self._padded_frame.place(relx=0.5, rely=0.5, anchor="center")
         self._border_frame.place(relx=0.5, rely=0.5, anchor="center")
+
+        self.pack_propagate(False)
 
 
 
