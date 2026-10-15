@@ -52,7 +52,6 @@ class UserInputHandler:
                 self._unselect_all()
 
     def _open(self, file: Path) -> None:
-        print(f"Shoud open {file}")
         self._pictureDirectory.directory = file.parent
         self._loaderThread.update_to(path=file)
         self._displayFrame.show_image(path=file)
