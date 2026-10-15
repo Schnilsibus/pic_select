@@ -10,7 +10,7 @@ class PaddedImageFrame(tk.Frame):
 
         super().__init__(master, width = full_width, height = full_height)
 
-        self._pad_Frame = tk.Frame(master=self, background="green", width = full_width, height=full_height)
+        self._pad_Frame = tk.Frame(master=self, width = full_width, height=full_height)
         self._image_label = tk.Label(master=self._pad_Frame, image=image, borderwidth=0)
 
         self._image_label.place(relx=0.5, rely=0.5, anchor="center")

@@ -28,22 +28,19 @@ class DisplayFrame(ttk.Frame):
         self._selection_count: tk.StringVar = tk.StringVar(self, f"{0:05}")
         self._selection_count_label: tk.Label = tk.Label(master=self,
                                                         textvariable=self._selection_count,
-                                                        font=("Arial", -20),
-                                                        background="grey")
+                                                        font=("Arial", -20))
         self._selection_count_label.place(relx=0, rely=0, anchor="nw")
 
         self._loader_busy: tk.StringVar = tk.StringVar(self, "")
         self._busy_indicator_label: tk.Label = tk.Label(master=self,
                                                         textvariable=self._loader_busy,
-                                                        font=("Arial", -20),
-                                                        background="grey")
+                                                        font=("Arial", -20))
         self._busy_indicator_label.place(relx=0, rely=1, anchor="sw")
 
         self._image_name: tk.StringVar = tk.StringVar(self, "")
         self._image_name_label: tk.Label = tk.Label(master=self,
                                                     textvariable=self._image_name,
-                                                    font=("Arial", -20),
-                                                    background="grey")
+                                                    font=("Arial", -20))
         self._image_name_label.place(relx=0.5, rely=1, anchor="s")
 
         self._select_image_frame: SelectImageFrame = None

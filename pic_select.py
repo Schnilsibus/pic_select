@@ -26,8 +26,7 @@ def start():
               inputHandler=inputHandler,
               loader=loader,
               loaderThread=loaderThread,
-              selector=selector,
-              fullscreen=False)
+              selector=selector)
 
     inputHandler.set_display_frame(displayFrame=app.displayFrame)
     inputHandler.set_image_view_frame(imageViewFrame=app.imageViewFrame)

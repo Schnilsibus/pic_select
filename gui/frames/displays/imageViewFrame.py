@@ -15,7 +15,7 @@ from ..displays.loadFrame import LoadFrame
 class ImageViewFrame(tk.Frame, Mapping):
 
     def __init__(self, master: tk.Widget, display_size: Tuple[int, int], selector: Selector, loader: Loader):
-        super().__init__(master=master, width=display_size[0], height=display_size[1], background="black")
+        super().__init__(master=master, width=display_size[0], height=display_size[1])
 
         self.pack_propagate(False)
 

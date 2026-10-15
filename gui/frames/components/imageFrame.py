@@ -17,7 +17,7 @@ _BORDER_SIZE = 10
 class ImageFrame(tk.Frame):
 
     def __init__(self, master: tk.Widget, display_size: Tuple[int, int], image: Image.Image, selected: bool = False):
-        super().__init__(master=master, background="yellow", width=display_size[0], height=display_size[1])
+        super().__init__(master=master, width=display_size[0], height=display_size[1])
 
         image_bounds = display_size[0] - (_GAP_SIZE * 2) - (_BORDER_SIZE * 2), display_size[1] - (_GAP_SIZE * 2) - (_BORDER_SIZE * 2)
         image_size = ImageFrame.calculate_max_inbound_size(image_bounds=image_bounds, full_size=(image.width, image.height))
@@ -54,7 +54,7 @@ class ImageFrame(tk.Frame):
 
     def unselect(self) -> None:
         self._selected = False
-        self._borderedFrame._border_frame.configure(background="white")
+        self._borderedFrame._border_frame.configure(background="SystemButtonFace")
 
     def toggle(self) -> None:
         if self.selected:
