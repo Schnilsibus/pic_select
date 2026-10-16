@@ -8,6 +8,6 @@ def copy_files_to_clipboard(files: List[Path]) -> None:
     if files is None or len(files) == 0:
         return None
     seperator = "', '"
-    cmd = f"powershell Set-Clipboard -Path '{seperator.join([str(p) for p in files])}'"
-    subprocess.run([cmd])
+    cmd = f"Set-Clipboard -Path '{seperator.join([str(p) for p in files])}'"
+    subprocess.run(["powershell", cmd], shell=True)    
     
