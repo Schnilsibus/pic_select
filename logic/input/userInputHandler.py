@@ -80,7 +80,8 @@ class UserInputHandler:
 
     def _select(self) -> None:
         path = self._imageViewFrame.current_image_path
-        self._selector.toggle(path)
+        if path in self._imageViewFrame:
+            self._selector.toggle(path)
 
     def _copy(self) -> None:
         selection = self._selector.get_selection()
