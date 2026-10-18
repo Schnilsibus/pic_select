@@ -14,22 +14,22 @@ from ...gui.frames.displayFrame import DisplayFrame
 
 class UserInputHandler:
 
-    def __init__(self, selector: Selector, loaderThread: LoaderThread, pictureDirectory: PictureDirectory):
+    def __init__(self, selector: Selector, loader_thread: LoaderThread, picture_directory: PictureDirectory):
 
         self._selector = selector
-        self._loaderThread = loaderThread
-        self._pictureDirectory = pictureDirectory
+        self._loader_thread = loader_thread
+        self._picture_directory = picture_directory
         
-        self._imageViewFrame = None
-        self._displayFrame = None
+        self._image_view_frame = None
+        self._display_frame = None
 
         self._last_arrow_input: Literal[UserInput.FORWARD, UserInput.BACKWARD] = None
 
-    def set_image_view_frame(self, imageViewFrame: ImageViewFrame) -> None:
-        self._imageViewFrame = imageViewFrame
+    def set_image_view_frame(self, image_view_frame: ImageViewFrame) -> None:
+        self._image_view_frame = image_view_frame
 
-    def set_display_frame(self, displayFrame: DisplayFrame) -> None:
-            self._displayFrame = displayFrame
+    def set_display_frame(self, display_frame: DisplayFrame) -> None:
+            self._display_frame = display_frame
 
     def handle_input(self, input: UserInput, **kwargs):
         if input not in UserInput:
@@ -52,35 +52,35 @@ class UserInputHandler:
                 self._unselect_all()
 
     def _open(self, file: Path) -> None:
-        self._pictureDirectory.directory = file.parent
-        self._loaderThread.update_to(path=file)
-        self._displayFrame.show_image(path=file)
+        self._picture_directory.directory = file.parent
+        self._loader_thread.update_to(path=file)
+        self._display_frame.show_image(path=file)
 
     def _forward(self) -> None:
-        if self._imageViewFrame.is_waiting_on_loader() and self._last_arrow_input == UserInput.FORWARD:
+        if self._image_view_frame.is_waiting_on_loader() and self._last_arrow_input == UserInput.FORWARD:
             return None
 
         self._last_arrow_input = UserInput.FORWARD
 
-        next_file = self._pictureDirectory.next_file(anchor=self._imageViewFrame.current_image_path)
+        next_file = self._picture_directory.next_file(anchor=self._image_view_frame.current_image_path)
         if next_file is not None:
-            self._displayFrame.show_image(path=next_file)
-            self._loaderThread.update_to(path=next_file)
+            self._display_frame.show_image(path=next_file)
+            self._loader_thread.update_to(path=next_file)
 
     def _backward(self) -> None:
-        if self._imageViewFrame.is_waiting_on_loader() and self._last_arrow_input == UserInput.BACKWARD:
+        if self._image_view_frame.is_waiting_on_loader() and self._last_arrow_input == UserInput.BACKWARD:
             return None
 
         self._last_arrow_input = UserInput.BACKWARD
         
-        previous_file = self._pictureDirectory.previous_file(anchor=self._imageViewFrame.current_image_path)
+        previous_file = self._picture_directory.previous_file(anchor=self._image_view_frame.current_image_path)
         if previous_file is not None:
-            self._displayFrame.show_image(path=previous_file)
-            self._loaderThread.update_to(path=previous_file)
+            self._display_frame.show_image(path=previous_file)
+            self._loader_thread.update_to(path=previous_file)
 
     def _select(self) -> None:
-        path = self._imageViewFrame.current_image_path
-        if path in self._imageViewFrame:
+        path = self._image_view_frame.current_image_path
+        if path in self._image_view_frame:
             self._selector.toggle(path)
 
     def _copy(self) -> None:

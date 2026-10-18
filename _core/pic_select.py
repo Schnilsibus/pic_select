@@ -13,23 +13,23 @@ from .gui.selectFile import ask_file_name
 
 
 def start():
-    pictureDirectory = PictureDirectory()
-    sizeManager = SizeManager()
-    loader = Loader(picture_directory=pictureDirectory, max_image_size=sizeManager.max_monitor_extension)
-    loaderThread = LoaderThread(loader=loader, picture_directory=pictureDirectory)
+    picture_directory = PictureDirectory()
+    size_manager = SizeManager()
+    loader = Loader(picture_directory=picture_directory, max_image_size=size_manager.max_monitor_extension)
+    loader_thread = LoaderThread(loader=loader, picture_directory=picture_directory)
     selector = Selector()
-    inputHandler = UserInputHandler(selector=selector, loaderThread=loaderThread, pictureDirectory=pictureDirectory)
+    input_handler = UserInputHandler(selector=selector, loader_thread=loader_thread, picture_directory=picture_directory)
 
-    worker_thread = threading.Thread(target=loaderThread.mainloop, daemon=True)
+    worker_thread = threading.Thread(target=loader_thread.mainloop, daemon=True)
 
     app = App(title="",
-              inputHandler=inputHandler,
+              input_handler=input_handler,
               loader=loader,
-              loaderThread=loaderThread,
+              loader_thread=loader_thread,
               selector=selector)
 
-    inputHandler.set_display_frame(displayFrame=app.displayFrame)
-    inputHandler.set_image_view_frame(imageViewFrame=app.imageViewFrame)
+    input_handler.set_display_frame(display_frame=app.display_frame)
+    input_handler.set_image_view_frame(image_view_frame=app.image_view_frame)
 
     worker_thread.start()
 

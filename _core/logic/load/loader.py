@@ -20,7 +20,6 @@ _TRANSPOSE_MAP = {
 
 
 
-
 class Loader(Mapping):
 
     def __init__(self, picture_directory: PictureDirectory, max_image_size: Tuple[int, int] = None):

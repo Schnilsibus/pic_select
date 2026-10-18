@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
-from typing import List, Tuple
+from typing import Tuple
 from pathlib import Path
 
 from ...logic.load.loaderThread import LoaderThread
@@ -11,17 +11,18 @@ from .displays.selectImageFrame import SelectImageFrame
 from .displays.imageViewFrame import ImageViewFrame
 
 
+
 _PADDING_PIXELS = 70
 
 
 
 class DisplayFrame(ttk.Frame):
 
-    def __init__(self, master: tk.Widget, loaderController: LoaderThread, selector: Selector):
+    def __init__(self, master: tk.Widget, loader_controller: LoaderThread, selector: Selector):
         super().__init__(master=master)
 
-        loaderController.subscribe_on_busy(callback=self._on_loader_busy)
-        loaderController.subscribe_on_idle(callback=self._on_loader_idle)
+        loader_controller.subscribe_on_busy(callback=self._on_loader_busy)
+        loader_controller.subscribe_on_idle(callback=self._on_loader_idle)
 
         selector.subscribe_on_select(callback=self._on_select)
 

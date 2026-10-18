@@ -8,6 +8,7 @@ from .pictureDirectory import PictureDirectory
 
 
 class LoaderThread:
+
     def __init__(self, loader: Loader, picture_directory: PictureDirectory, centre_file: Path = None, preload_length: int = 6, batch_size: int = 3):
         self._preload_length = preload_length
         self._batch_size = batch_size
@@ -43,20 +44,18 @@ class LoaderThread:
         self._queue_size = self._queue.qsize()
 
         self._trigger_busy()
-        self._updateLoader(path = request)
+        self._update_loader(path = request)
         self._queue.task_done()
 
-    def _updateLoader(self, path: Path) -> None:
+    def _update_loader(self, path: Path) -> None:
         if self._centre_file is None:
             self._centre_file = path
-
         if self._unload_out_of_scope_images(path=path):
             self._centre_file = path
             return None
         if self._load_in_scope_images(path=path):
             self._centre_file = path
             return None
-
         self._centre_file = path
 
     def _unload_out_of_scope_images(self, path: Path) -> bool:

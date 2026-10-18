@@ -3,7 +3,6 @@ from typing import Tuple
 
 
 
-
 class LoadFrame(tk.Frame):
 
     def __init__(self, master: tk.Widget, display_size: Tuple[int, int]):

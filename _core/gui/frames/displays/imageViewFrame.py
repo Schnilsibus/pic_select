@@ -3,13 +3,13 @@ from typing import Tuple, Dict, Self
 from pathlib import Path
 from collections.abc import Mapping
 from PIL import Image
-from time import perf_counter
 
 from ....logic.selector import Selector
 from ....logic.load.loader import Loader
 
 from ..components.imageFrame import ImageFrame
 from ..displays.loadFrame import LoadFrame
+
 
 
 class ImageViewFrame(tk.Frame, Mapping):

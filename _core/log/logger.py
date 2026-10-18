@@ -1,6 +1,8 @@
 from pathlib import Path
 from datetime import datetime
 
+
+
 class Logger():
     def __init__(self, log_file: Path = None):
         self._log_file = log_file

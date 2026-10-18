@@ -1,5 +1,4 @@
 import tkinter as tk
-from pathlib import Path
 
 from ..logic.input.UserInput import UserInput
 from ..logic.input.userInputHandler import UserInputHandler
@@ -25,9 +24,9 @@ class App(tk.Tk):
     def __init__(
             self,
             title: str,
-            inputHandler: UserInputHandler,
+            input_handler: UserInputHandler,
             loader: Loader,
-            loaderThread: LoaderThread,
+            loader_thread: LoaderThread,
             selector: Selector,
             fullscreen = True):
         super().__init__()
@@ -57,38 +56,38 @@ class App(tk.Tk):
         if self._is_fullscreen:
             self.enter_fullscreen()
 
-        self._inputHandler = inputHandler
+        self._input_handler = input_handler
 
-        self._displayFrame = DisplayFrame(master=self, loaderController=loaderThread, selector=selector)
-        self._displayFrame.pack(fill="both", expand=True)
-        self._displayFrame.setup_displays(selector=selector, loader=loader)
-        self._displayFrame.show_select_image()
+        self._display_frame = DisplayFrame(master=self, loader_controller=loader_thread, selector=selector)
+        self._display_frame.pack(fill="both", expand=True)
+        self._display_frame.setup_displays(selector=selector, loader=loader)
+        self._display_frame.show_select_image()
 
     @property
-    def displayFrame(self) -> DisplayFrame:
-        return self._displayFrame
+    def display_frame(self) -> DisplayFrame:
+        return self._display_frame
     
     @property
-    def imageViewFrame(self) -> ImageViewFrame:
-        return self._displayFrame.image_view_frame
+    def image_view_frame(self) -> ImageViewFrame:
+        return self._display_frame.image_view_frame
 
     def _on_right_arrow(self, event) -> None:
-        self._inputHandler.handle_input(input=UserInput.FORWARD)
+        self._input_handler.handle_input(input=UserInput.FORWARD)
 
     def _on_left_arrow(self, event) -> None:
-        self._inputHandler.handle_input(input=UserInput.BACKWARD)
+        self._input_handler.handle_input(input=UserInput.BACKWARD)
 
     def _on_space(self, event) -> None:
-        self._inputHandler.handle_input(input=UserInput.SELECT)
+        self._input_handler.handle_input(input=UserInput.SELECT)
 
     def _on_strg_c(self, evetn) -> None:
-        self._inputHandler.handle_input(input=UserInput.COPY)
+        self._input_handler.handle_input(input=UserInput.COPY)
 
     def _on_strg_a(self, event) -> None:
-        self._inputHandler.handle_input(input=UserInput.SELECT_ALL)
+        self._input_handler.handle_input(input=UserInput.SELECT_ALL)
     
     def _on_escape(self, event) -> None:
-        self._inputHandler.handle_input(input=UserInput.UNSELECT_ALL)
+        self._input_handler.handle_input(input=UserInput.UNSELECT_ALL)
 
     def _on_strg_t(self, event) -> None:
         self.quit()
@@ -98,7 +97,7 @@ class App(tk.Tk):
 
     def _on_strg_o(self, event) -> None:
         file = ask_file_name(parent=self)
-        self._inputHandler.handle_input(input=UserInput.OPEN, file=file)
+        self._input_handler.handle_input(input=UserInput.OPEN, file=file)
 
     def toggle_fullscreen(self) -> None:
         self._is_fullscreen = not self._is_fullscreen

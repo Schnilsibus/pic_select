@@ -5,6 +5,7 @@ from collections import UserList
 
 
 class PictureDirectory(UserList):
+    
     def __init__(self, directory: Path = None):
         if directory is None:
             self._directory = directory
