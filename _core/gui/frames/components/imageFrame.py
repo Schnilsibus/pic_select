@@ -2,15 +2,13 @@ import tkinter as tk
 from PIL import Image, ImageTk
 from typing import Tuple
 import math
-from time import perf_counter
 
 from .borderedImageFrame import BorderedImageFrame
-from .paddedImageFrame import PaddedImageFrame
 
 
 
-_GAP_SIZE = 10
-_BORDER_SIZE = 10
+_GAP_SIZE = 5
+_BORDER_SIZE = 7
 
 
 
