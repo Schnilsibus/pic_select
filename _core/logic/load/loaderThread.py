@@ -42,10 +42,6 @@ class LoaderThread:
             self._queue.task_done()
         self._queue_size = self._queue.qsize()
 
-        if request == self._centre_file:
-            self._queue.task_done()
-            return None
-
         self._trigger_busy()
         self._updateLoader(path = request)
         self._queue.task_done()
