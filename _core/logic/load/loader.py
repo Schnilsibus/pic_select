@@ -76,7 +76,7 @@ class Loader(Mapping):
         self._trigger_load(image=image, path=path)
         return image
 
-    def unload(self, path) -> None:
+    def unload(self, path: Path) -> None:
         if path not in self._images:
             return None
 
