@@ -13,7 +13,7 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     license="MIT",
     keywords=[],
-    package_dir={"": "_core"},
+    packages=setuptools.find_namespace_packages(where = ".", include = ["pic_select", "pic_select.*"]),
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Intended Audience :: Developers",
