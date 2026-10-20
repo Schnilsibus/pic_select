@@ -2,14 +2,17 @@ from pathlib import Path
 from typing import Dict, List, Set, Callable
 from collections.abc import Mapping
 
+from .load.pictureDirectory import PictureDirectory
+
 
 
 class Selector(Mapping):
 
-    def __init__(self):
+    def __init__(self, picture_directoy: PictureDirectory):
+        self._picture_directory = picture_directoy
         self._files: Dict[Path, bool] = {}
 
-        self._callbacks: Set[Callable[[Path, bool], None]] = set()
+        self._callbacks: Set[Callable[[Path, bool, int], None]] = set()
 
     def __getitem__(self, path: Path):
         if path not in self._files:
@@ -33,7 +36,7 @@ class Selector(Mapping):
 
     def _trigger_select(self, path: Path) -> None:
         for callback in self._callbacks:
-            callback(path, self.is_selected(path=path))
+            callback(path, self.is_selected(path=path), self.get_number_selected())
 
     def toggle(self, path: Path) -> bool:
         if path in self._files:
@@ -45,6 +48,9 @@ class Selector(Mapping):
 
     def get_selection(self) -> List[Path]:
         return list({k: v for k, v in self._files.items() if v is True}.keys())
+
+    def get_number_selected(self) -> int:
+        return len(self.get_selection())
 
     def is_selected(self, path: Path) -> bool:
         if path in self._files:
@@ -58,15 +64,15 @@ class Selector(Mapping):
             self._trigger_select(path=path)
 
     def select_all(self) -> None:
-        self.multi_select(paths=self._files)
+        self.multi_select(paths=self._picture_directory)
     
     def unselect_all(self) -> None:
         for path in self._files.keys():
             self._files[path] = False
             self._trigger_select(path=path)
 
-    def subscribe_on_select(self, callback: Callable[[Path, bool], None]):
+    def subscribe_on_select(self, callback: Callable[[Path, bool, int], None]):
         self._callbacks.add(callback)
 
-    def unsubscribe_on_select(self, callback: Callable[[Path, bool], None]):
+    def unsubscribe_on_select(self, callback: Callable[[Path, bool, int], None]):
         self._callbacks.remove(callback)

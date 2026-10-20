@@ -60,13 +60,8 @@ class DisplayFrame(ttk.Frame):
     def _on_new_image(self, path: Path) -> None:
         self.show_image(path=path)
 
-    def _on_select(self, path: Path, selected: bool) -> None:
-        counter = int(self._selection_count.get())
-        if selected:
-            counter = counter + 1
-        else:
-            counter = counter - 1
-        self._selection_count.set(f"{counter:05}")
+    def _on_select(self, path: Path, selected: bool, count: int) -> None:
+        self._selection_count.set(f"{count:05}")
 
     def setup_displays(self, selector: Selector, loader: Loader) -> None:
         self.master.update_idletasks()

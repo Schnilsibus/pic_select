@@ -62,7 +62,7 @@ class ImageViewFrame(tk.Frame, Mapping):
         if unloaded is not None:
             self.remove_image_frame(path=unloaded)
 
-    def _on_select(self, path: Path, selected: bool) -> None:
+    def _on_select(self, path: Path, selected: bool, count: int) -> None:
         if path not in self._image_frames:
             return None
         if selected:

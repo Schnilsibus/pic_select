@@ -17,7 +17,7 @@ def start():
     size_manager = SizeManager()
     loader = Loader(picture_directory=picture_directory, max_image_size=size_manager.max_monitor_extension)
     loader_thread = LoaderThread(loader=loader, picture_directory=picture_directory)
-    selector = Selector()
+    selector = Selector(picture_directoy=picture_directory)
     input_handler = UserInputHandler(selector=selector, loader_thread=loader_thread, picture_directory=picture_directory)
 
     worker_thread = threading.Thread(target=loader_thread.mainloop, daemon=True)
