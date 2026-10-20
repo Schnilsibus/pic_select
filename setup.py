@@ -5,7 +5,7 @@ with open("README.md", "r") as fp:
 
 setuptools.setup(
     name="pic_select",
-    version="1.0.0",
+    version="1.0.1",
     author="Nils Urbach",
     author_email="ndu01u@gmail.com",
     description="",
