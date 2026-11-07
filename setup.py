@@ -1,13 +1,11 @@
 import setuptools
 
-# TODO: add requiremnets (pillow; screeninfo)
-
 with open("README.md", "r") as fp:
     long_description = fp.read()
 
 setuptools.setup(
     name="pic_select",
-    version="1.0.1",
+    version="1.0.3",
     author="Nils Urbach",
     author_email="ndu01u@gmail.com",
     description="",
@@ -23,6 +21,10 @@ setuptools.setup(
         "Operating System :: OS Independent",
         "Natural Language :: English",
         "Programming Language :: Python"
+    ],
+    install_requires=[
+        "screeninfo>=0.8",
+        "pillow>=9.5"
     ],
     test_suite="tests",
 )   

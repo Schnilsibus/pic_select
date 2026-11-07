@@ -11,7 +11,7 @@ from ...gui.frames.displays.imageViewFrame import ImageViewFrame
 from ...gui.frames.displayFrame import DisplayFrame
 
 
-# TODO: add forward/ backward input with mouse
+
 class UserInputHandler:
 
     def __init__(self, selector: Selector, loader_thread: LoaderThread, picture_directory: PictureDirectory):
