@@ -11,7 +11,7 @@ from ...gui.frames.displays.imageViewFrame import ImageViewFrame
 from ...gui.frames.displayFrame import DisplayFrame
 
 
-
+# TODO: add forward/ backward input with mouse
 class UserInputHandler:
 
     def __init__(self, selector: Selector, loader_thread: LoaderThread, picture_directory: PictureDirectory):
@@ -52,6 +52,8 @@ class UserInputHandler:
                 self._unselect_all()
 
     def _open(self, file: Path) -> None:
+        if not PictureDirectory.is_valid_image(path=file):
+            return None
         self._picture_directory.directory = file.parent
         self._loader_thread.update_to(path=file)
         self._display_frame.show_image(path=file)

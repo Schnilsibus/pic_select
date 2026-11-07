@@ -1,5 +1,7 @@
 import setuptools
 
+# TODO: add requiremnets (pillow; screeninfo)
+
 with open("README.md", "r") as fp:
     long_description = fp.read()
 

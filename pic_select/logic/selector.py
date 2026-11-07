@@ -14,6 +14,8 @@ class Selector(Mapping):
 
         self._callbacks: Set[Callable[[Path, bool, int], None]] = set()
 
+        self._picture_directory.subscribe_to_file_removed(callback=self._on_file_removed)
+
     def __getitem__(self, path: Path):
         if path not in self._files:
             return False
@@ -33,6 +35,10 @@ class Selector(Mapping):
 
     def __len__(self):
         return len(self._files)
+
+    def _on_file_removed(self, file: Path) -> None:
+        if file in self:
+            del self[file]
 
     def _trigger_select(self, path: Path) -> None:
         for callback in self._callbacks:

@@ -1,6 +1,7 @@
 from pathlib import Path
-from typing import List
 from collections import UserList
+from PIL import Image
+from typing import Set, Callable, List
 
 
 
@@ -13,6 +14,8 @@ class PictureDirectory(UserList):
         else:
             self.directory = directory
         self.data = self._files
+
+        self._file_removed_callbacks: Set[Callable[[Path], None]] = set()
     
     def _lookup_files(self) -> None:
         self._files = [f for f in self._directory.iterdir() if f.is_file()]
@@ -33,11 +36,16 @@ class PictureDirectory(UserList):
 
     def get_relative_file(self, anchor: Path, distance: int) -> Path:
         if anchor not in self:
-            raise RuntimeError(f"{anchor} not in {self._directory}")
+            return None
         index = self.index(anchor) + distance
         if index < 0 or index >= len(self):
             return None
-        return self[index]
+        file = self[index]
+        if not PictureDirectory.is_valid_image(path=file):
+            self.remove(file)
+            self._trigger_file_removed(removed_file=file)
+            return self.get_relative_file(anchor=file, distance=int(distance / abs(distance)))
+        return file
 
     def previous_file(self, anchor: Path) -> Path:
         return self.get_relative_file(anchor=anchor, distance=-1)
@@ -51,3 +59,21 @@ class PictureDirectory(UserList):
         if pathB not in self:
             raise RuntimeError(f"{pathB} not in {self._directory}")
         return abs(self.index(pathA) - self.index(pathB))
+
+    @staticmethod
+    def is_valid_image(path: Path) -> bool:
+        try:
+            Image.open(path).verify()
+        except Exception:
+            return False
+        return True
+
+    def _trigger_file_removed(self, removed_file: List[Path]) -> None:
+        for callback in self._file_removed_callbacks:
+            callback(removed_file)
+
+    def subscribe_to_file_removed(self, callback: Callable[[Path], None]) -> None:
+        self._file_removed_callbacks.add(callback)
+
+    def unsubscribe_to_file_removed(self, callback: Callable[[Path], None]) -> None:
+        self._file_removed_callbacks.remove(callback)
