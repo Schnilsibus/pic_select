@@ -40,6 +40,7 @@ class App(tk.Tk):
 
         self.bind("<Left>", self._on_left_arrow)
         self.bind("<Right>", self._on_right_arrow)
+        self.bind("<Button-1>", self._on_left_mouse)
         self.bind("<space>", self._on_space)
         self.bind("<Control-c>", self._on_strg_c)
         self.bind("<Control-C>", self._on_strg_c)
@@ -76,6 +77,12 @@ class App(tk.Tk):
 
     def _on_left_arrow(self, event) -> None:
         self._input_handler.handle_input(input=UserInput.BACKWARD)
+
+    def _on_left_mouse(self, event) -> None:
+        if event.x < self.winfo_width() / 2:
+            self._input_handler.handle_input(input=UserInput.BACKWARD)
+        else:
+            self._input_handler.handle_input(input=UserInput.FORWARD)
 
     def _on_space(self, event) -> None:
         self._input_handler.handle_input(input=UserInput.SELECT)
